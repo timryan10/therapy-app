@@ -1,0 +1,103 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #007da4;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+  place-items: center;
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  width: 80%;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.signIn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-top: 20px;
+  border: 1px solid #cccccc;
+  width: 424px;
+  height: 200px;
+  border-radius: 20px;
+  color: black;
+}
+
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 10px 20px;
+  background-color: #007da4;
+  color: white;
+}
+
+.header {
+  width: 80%;
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.navbar ul {
+  display: flex;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.navbar li {
+  margin: 0 10px;
+  cursor: pointer;
+}
+
+.signIn input {
+  margin: 5px 0;
+  padding: 10px;
+  width: 80%;
+  border: 1px solid #cccccc;
+  border-radius: 10px;
+}
+
+.signIn button {
+  margin-top: 10px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 10px;
+  background-color: #007da4;
+  color: white;
+  cursor: pointer;
+}
+
+.signIn button:hover {
+  background-color: #005f7a;
+}
