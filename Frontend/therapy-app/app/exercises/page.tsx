@@ -34,6 +34,10 @@ export default function ExercisesPage() {
     load();
   }, []);
 
+  // simple feedback state for saving to favorites
+  const [favLoading, setFavLoading] = useState<Record<number, boolean>>({});
+  const [favError, setFavError] = useState<string | null>(null);
+
   function submit(e?: FormEvent) {
     e?.preventDefault?.();
     setError(null);
@@ -78,18 +82,64 @@ export default function ExercisesPage() {
             {exercises.length === 0 ? (
               <div style={{ color: '#666' }}>No exercises in the library.</div>
             ) : (
-              exercises.map((ex) => (
-                <div key={ex.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #f5f5f5' }}>
-                  <div>
-                    <div style={{ fontWeight: 600 }}>{ex.name}</div>
-                    {ex.category && <div style={{ fontSize: 12, color: '#666' }}>{ex.category}</div>}
-                    {ex.description && <div style={{ fontSize: 12, color: '#666' }}>{ex.description}</div>}
-                  </div>
-                </div>
-              ))
+              (() => {
+                // group exercises by category (body part)
+                const groups: Record<string, Exercise[]> = exercises.reduce((acc, cur) => {
+                  const key = cur.category && cur.category.trim() ? cur.category : 'Uncategorized';
+                  if (!acc[key]) acc[key] = [];
+                  acc[key].push(cur);
+                  return acc;
+                }, {} as Record<string, Exercise[]>);
+
+                return Object.keys(groups)
+                  .sort()
+                  .map((cat) => (
+                    <section key={cat} style={{ marginBottom: 12 }}>
+                      <h4 style={{ margin: '8px 0' }}>{cat}</h4>
+                      <div>
+                        {groups[cat].map((ex) => (
+                          <div key={ex.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #f5f5f5' }}>
+                            <div>
+                              <div style={{ fontWeight: 600 }}>{ex.name}</div>
+                              {ex.description && <div style={{ fontSize: 12, color: '#666' }}>{ex.description}</div>}
+                            </div>
+                            <div style={{ display: 'flex', gap: 8 }}>
+                              <button
+                                disabled={!!favLoading[ex.id]}
+                                onClick={() => {
+                                  setFavError(null);
+                                  setFavLoading((s) => ({ ...s, [ex.id]: true }));
+                                  fetch(`${BACKEND}/therapists/therapist1/favorites`, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify(ex)
+                                  })
+                                    .then((r) => {
+                                      if (r.status === 409) throw new Error('Already in My Library');
+                                      if (!r.ok) throw new Error('Failed to save favorite');
+                                      return r.json();
+                                    })
+                                    .then(() => setFavLoading((s) => ({ ...s, [ex.id]: false })))
+                                    .catch((err) => {
+                                      setFavLoading((s) => ({ ...s, [ex.id]: false }));
+                                      setFavError(String(err.message || err));
+                                    });
+                                }}
+                                style={{ padding: '6px 10px', borderRadius: 6, border: 'none', background: '#007da4', color: 'white', cursor: 'pointer' }}
+                              >
+                                {favLoading[ex.id] ? 'Saving...' : 'Save to My Library'}
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </section>
+                  ));
+              })()
             )}
           </div>
         )}
+        {favError && <div style={{ color: 'red', marginTop: 8 }}>{favError}</div>}
       </div>
     </div>
   );

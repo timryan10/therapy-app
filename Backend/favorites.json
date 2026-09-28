@@ -1,0 +1,36 @@
+{
+  "therapist1": [
+    {
+      "id": 4,
+      "name": "Wall Push-up",
+      "category": "Upper Extremity",
+      "difficulty": "Medium",
+      "description": "Inclined push-ups against a wall for shoulder and chest strength.",
+      "duration": "3 sets of 8"
+    },
+    {
+      "id": 3,
+      "name": "Shoulder Pendulum",
+      "category": "Upper Extremity",
+      "difficulty": "Easy",
+      "description": "Pendulum swings to mobilize the shoulder joint.",
+      "duration": "2 minutes"
+    },
+    {
+      "id": 5,
+      "name": "Calf Raises",
+      "category": "Lower Extremity",
+      "difficulty": "Easy",
+      "description": "Standing calf raises to strengthen the calf muscles.",
+      "duration": "3 sets of 12"
+    },
+    {
+      "id": 2,
+      "name": "Hamstring Stretch",
+      "category": "Lower Extremity",
+      "difficulty": "Easy",
+      "description": "Standing hamstring stretch for flexibility.",
+      "duration": "30s hold"
+    }
+  ]
+}

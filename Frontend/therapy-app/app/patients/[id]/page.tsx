@@ -11,6 +11,7 @@ type Patient = {
   firstName: string;
   lastName: string;
   contact?: string;
+  birthdate?: string;
   lastVisit?: string;
   notes?: string;
 };
@@ -38,7 +39,10 @@ export default function PatientPage() {
         if (!r.ok) throw new Error('not found');
         return r.json();
       })
-      .then((data) => setPatient(data))
+      .then((data) => {
+        setPatient(data);
+        setHepList((data && data.hep) || []);
+      })
       .catch(() => setPatient(null))
       .finally(() => setLoading(false));
 
@@ -62,8 +66,27 @@ export default function PatientPage() {
       firstName: patient.firstName,
       lastName: patient.lastName,
       contact: patient.contact || "",
+      birthdate: patient.birthdate || "",
+      patientId: patient.id,
     });
     router.push(`/new-hep?${params.toString()}`);
+  }
+
+  async function saveHep() {
+    if (!patient) return;
+    try {
+      await fetch(`${BACKEND}/patients/${patient.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ hep: hepList })
+      });
+      const r = await fetch(`${BACKEND}/patients/${id}`);
+      const d = await r.json();
+      setPatient(d);
+      setHepList(d.hep || []);
+    } catch (err) {
+      console.error('Failed to save HEP', err);
+    }
   }
 
   return (
@@ -78,29 +101,19 @@ export default function PatientPage() {
             <div>
               <h2>{patient.firstName} {patient.lastName}</h2>
               <div style={{ color: '#666', marginBottom: 8 }}>{patient.contact}</div>
+              {patient.birthdate && <div style={{ color: '#666', marginBottom: 8 }}>DOB: {patient.birthdate}</div>}
               <div style={{ fontSize: 13, marginBottom: 12 }}>Last visit: {patient.lastVisit}</div>
               <div style={{ marginBottom: 12 }}>{patient.notes}</div>
 
               <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
+                <button onClick={() => router.push('/therapist-dashboard')} style={{ background: '#eee', color: '#222', border: 'none', padding: '8px 12px', borderRadius: 8 }}>Back to Dashboard</button>
                 <button onClick={goToUpdateHEP} style={{ background: '#007da4', color: 'white', border: 'none', padding: '8px 12px', borderRadius: 8 }}>Update HEP</button>
               </div>
 
-              <h3>Library Exercises</h3>
-              <div style={{ border: '1px solid #eee', padding: 8, borderRadius: 8 }}>
-                {exercises.slice(0, 10).map((ex) => (
-                  <div key={ex.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #f5f5f5' }}>
-                    <div>
-                      <div style={{ fontWeight: 600 }}>{ex.name}</div>
-                      {ex.category && <div style={{ fontSize: 12, color: '#666' }}>{ex.category}</div>}
-                    </div>
-                    <div>
-                      <button onClick={() => addToHEP(ex)} style={{ padding: '6px 10px', borderRadius: 6, border: 'none', background: '#007da4', color: 'white', cursor: 'pointer' }}>Add to HEP</button>
-                    </div>
-                  </div>
-                ))}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <h3 style={{ marginTop: 16, marginBottom: 0 }}>Current HEP</h3>
+                <button onClick={saveHep} style={{ padding: '6px 10px', borderRadius: 6, border: 'none', background: '#2e8b57', color: 'white', cursor: 'pointer' }}>Save HEP</button>
               </div>
-
-              <h3 style={{ marginTop: 16 }}>Current HEP (unsaved)</h3>
               {hepList.length === 0 ? (
                 <div style={{ color: '#666' }}>No exercises added yet.</div>
               ) : (

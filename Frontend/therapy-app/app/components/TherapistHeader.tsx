@@ -6,8 +6,11 @@ export default function Header() {
   return (
     <div className="header">
       <nav className="navbar">
-        <Image src={logo} alt="Raleigh Ortho Logo" width={100} height={100} />
+        <Link href="/therapist-dashboard">
+          <Image src={logo} alt="Raleigh Ortho Logo" width={100} height={100} />
+        </Link>
         <ul>
+          <li><Link href="/therapist-library">My Library</Link></li>
           <li><Link href="/exercises">Exercises</Link></li>
           <li><Link href="/patients">Patients</Link></li>
         </ul>

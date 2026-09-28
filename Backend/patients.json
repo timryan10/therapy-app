@@ -4,6 +4,7 @@
     "firstName": "Alice",
     "lastName": "Johnson",
     "contact": "alice.j@example.com",
+    "birthdate": "1988-04-12",
     "lastVisit": "2026-09-20",
     "notes": "Knee pain, HEP assigned 2026-09-20"
   },
@@ -12,6 +13,7 @@
     "firstName": "Marcus",
     "lastName": "Lee",
     "contact": "marcus.lee@example.com",
+    "birthdate": "1979-11-03",
     "lastVisit": "2026-09-25",
     "notes": "Shoulder mobility work"
   },
@@ -20,6 +22,7 @@
     "firstName": "Sana",
     "lastName": "Patel",
     "contact": "sana.patel@example.com",
+    "birthdate": "1992-06-18",
     "lastVisit": "2026-09-10",
     "notes": "Post-op ankle rehab"
   },
@@ -28,7 +31,59 @@
     "firstName": "Diego",
     "lastName": "Martinez",
     "contact": "diego.m@example.com",
+    "birthdate": "1985-02-24",
     "lastVisit": "2026-09-27",
     "notes": "Follow-up — progressing well"
+  },
+  {
+    "id": "p1790622623292",
+    "firstName": "Timothy",
+    "lastName": "Ryan",
+    "contact": "tryan@example.com",
+    "birthdate": "1997-07-11",
+    "lastVisit": "2026-09-28",
+    "notes": "",
+    "hep": [
+      {
+        "id": 1790622900309,
+        "name": "Calf Raises",
+        "category": "Lower Extremity",
+        "description": "Standing calf raises to strengthen the calf muscles."
+      }
+    ]
+  },
+  {
+    "id": "p1790623121270",
+    "firstName": "Ilene",
+    "lastName": "example",
+    "contact": "ilene@example.comk",
+    "birthdate": "2000-01-14",
+    "hep": [
+      {
+        "id": 1790623119887,
+        "name": "Calf Raises",
+        "category": "Lower Extremity",
+        "description": "Standing calf raises to strengthen the calf muscles."
+      }
+    ],
+    "lastVisit": "2026-09-28",
+    "notes": ""
+  },
+  {
+    "id": "p1790623403910",
+    "firstName": "example",
+    "lastName": "example",
+    "contact": "example@example.com",
+    "birthdate": "2000-01-01",
+    "hep": [
+      {
+        "id": 1790623423976,
+        "name": "Calf Raises",
+        "category": "Lower Extremity",
+        "description": "Standing calf raises to strengthen the calf muscles."
+      }
+    ],
+    "lastVisit": "2026-09-28",
+    "notes": ""
   }
 ]

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, FormEvent, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import Header from "../components/TherapistHeader";
 
 type Exercise = {
@@ -18,6 +18,11 @@ export default function NewHEP() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [contact, setContact] = useState("");
+  const [birthdate, setBirthdate] = useState("");
+  const [patientId, setPatientId] = useState<string | null>(null);
+  const [savingPatient, setSavingPatient] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const router = useRouter();
 
   const [exerciseName, setExerciseName] = useState("");
   const [exercises, setExercises] = useState<Exercise[]>([]);
@@ -32,9 +37,13 @@ export default function NewHEP() {
       const fn = searchParams?.get?.("firstName");
       const ln = searchParams?.get?.("lastName");
       const c = searchParams?.get?.("contact");
+      const b = searchParams?.get?.("birthdate");
+      const pid = searchParams?.get?.("patientId");
       if (fn) setFirstName(fn);
       if (ln) setLastName(ln);
       if (c) setContact(c);
+      if (b) setBirthdate(b);
+      if (pid) setPatientId(pid);
     } catch (e) {
       // ignore
     }
@@ -119,7 +128,19 @@ export default function NewHEP() {
               placeholder="Email or phone"
             />
           </label>
+
+          <label>
+            Birthdate
+            <input
+              type="date"
+              value={birthdate}
+              onChange={(e) => setBirthdate(e.target.value)}
+              placeholder="YYYY-MM-DD"
+            />
+          </label>
         </form>
+
+        {/* Create/Update patient button moved below exercises for better flow */}
 
         <section className="exercises">
           <h3>Exercises</h3>
@@ -168,6 +189,51 @@ export default function NewHEP() {
                 </div>
               ))
             )}
+          </div>
+          <div style={{ marginTop: 12, marginBottom: 12 }}>
+            <button
+              onClick={async () => {
+                setSaveError(null);
+                setSavingPatient(true);
+                try {
+                  const payload = { firstName, lastName, contact, birthdate, hep: exercises };
+                  if (patientId) {
+                    const res = await fetch(`${BACKEND}/patients/${patientId}`, {
+                      method: 'PUT',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify(payload)
+                    });
+                    if (!res.ok) throw new Error('Failed to update patient');
+                    const updated = await res.json();
+                    router.push(`/patients/${updated.id}`);
+                  } else {
+                    const res = await fetch(`${BACKEND}/patients`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify(payload)
+                    });
+                    if (!res.ok) throw new Error('Failed to create patient');
+                    const created = await res.json();
+                    router.push(`/patients/${created.id}`);
+                  }
+                } catch (e: any) {
+                  setSaveError(String(e?.message || e));
+                } finally {
+                  setSavingPatient(false);
+                }
+              }}
+              style={{ padding: '8px 12px', background: '#007da4', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer' }}
+              disabled={savingPatient}
+            >
+              {savingPatient ? 'Saving...' : patientId ? 'Update Patient' : 'Create Patient'}
+            </button>
+            <button
+              onClick={() => router.push('/therapist-dashboard')}
+              style={{ padding: '8px 12px', marginLeft: 8, background: '#eee', color: '#222', border: 'none', borderRadius: 8, cursor: 'pointer' }}
+            >
+              Back to Dashboard
+            </button>
+            {saveError && <div style={{ color: 'red', marginTop: 8 }}>{saveError}</div>}
           </div>
         </section>
       </div>
