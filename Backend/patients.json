@@ -1,0 +1,34 @@
+[
+  {
+    "id": "p1",
+    "firstName": "Alice",
+    "lastName": "Johnson",
+    "contact": "alice.j@example.com",
+    "lastVisit": "2026-09-20",
+    "notes": "Knee pain, HEP assigned 2026-09-20"
+  },
+  {
+    "id": "p2",
+    "firstName": "Marcus",
+    "lastName": "Lee",
+    "contact": "marcus.lee@example.com",
+    "lastVisit": "2026-09-25",
+    "notes": "Shoulder mobility work"
+  },
+  {
+    "id": "p3",
+    "firstName": "Sana",
+    "lastName": "Patel",
+    "contact": "sana.patel@example.com",
+    "lastVisit": "2026-09-10",
+    "notes": "Post-op ankle rehab"
+  },
+  {
+    "id": "p4",
+    "firstName": "Diego",
+    "lastName": "Martinez",
+    "contact": "diego.m@example.com",
+    "lastVisit": "2026-09-27",
+    "notes": "Follow-up — progressing well"
+  }
+]
