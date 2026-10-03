@@ -11,15 +11,22 @@ type Exercise = {
   description?: string;
 };
 
+type CaseItem = {
+  id: string | number;
+  title: string;
+  bodyParts: string[];
+  notes?: string;
+  hep?: Exercise[];
+};
+
 const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:4000";
 
-export default function NewHEP() {
-  // parse search params from window.location inside useEffect (avoid useSearchParams prerender requirement)
+export default function CreatePatient() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [contact, setContact] = useState("");
   const [birthdate, setBirthdate] = useState("");
-  const [patientId, setPatientId] = useState<string | null>(null);
+  // create-patient is only for creating new patients; do not prefill from query
   const [savingPatient, setSavingPatient] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const router = useRouter();
@@ -27,37 +34,20 @@ export default function NewHEP() {
   const [exerciseName, setExerciseName] = useState("");
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [query, setQuery] = useState("");
-
-  // results from backend library
   const [libraryResults, setLibraryResults] = useState<Exercise[]>([]);
 
-  useEffect(() => {
-    // prefill from query params when navigating from therapist dashboard
-    try {
-      if (typeof window !== "undefined") {
-        const params = new URLSearchParams(window.location.search);
-        const fn = params.get("firstName");
-        const ln = params.get("lastName");
-        const c = params.get("contact");
-        const b = params.get("birthdate");
-        const pid = params.get("patientId");
-        if (fn) setFirstName(fn);
-        if (ln) setLastName(ln);
-        if (c) setContact(c);
-        if (b) setBirthdate(b);
-        if (pid) setPatientId(pid);
-      }
-    } catch (e) {
-      // ignore
-    }
+  const [cases, setCases] = useState<CaseItem[]>([]);
+  const [caseTitle, setCaseTitle] = useState("");
+  const [caseBodyParts, setCaseBodyParts] = useState("");
+  const [caseNotes, setCaseNotes] = useState("");
+  // if a case title is entered on the form, exercises will be attached to that pending case
+  const [pendingCaseHep, setPendingCaseHep] = useState<Exercise[]>([]);
 
-    // optional: warm cache of library on mount
-    fetch(`${BACKEND}/exercises`)
-      .then((r) => r.json())
-      .catch(() => {});
+  useEffect(() => {
+    // warm cache of library on mount
+    fetch(`${BACKEND}/exercises`).then((r) => r.json()).catch(() => {});
   }, []);
 
-  // debounce search against backend when query changes
   useEffect(() => {
     if (!query) {
       setLibraryResults([]);
@@ -78,15 +68,25 @@ export default function NewHEP() {
     e?.preventDefault?.();
     const name = exerciseName.trim();
     if (!name) return;
-    setExercises((prev) => [{ id: Date.now(), name }, ...prev]);
+    const newEx: Exercise = { id: Date.now(), name };
+    // if therapist has started entering a case title, attach to the pending case
+    if (caseTitle.trim() !== '') {
+      setPendingCaseHep((prev) => (prev.some((p) => p.name === newEx.name) ? prev : [newEx, ...prev]));
+    } else {
+      setExercises((prev) => (prev.some((p) => p.name === newEx.name) ? prev : [newEx, ...prev]));
+    }
     setExerciseName("");
     setQuery("");
     setLibraryResults([]);
   }
 
   function addExerciseFromLibrary(item: Exercise) {
-    // avoid duplicates by name
-    setExercises((prev) => (prev.some((p) => p.name === item.name) ? prev : [{ id: Date.now(), name: item.name, category: item.category, description: item.description }, ...prev]));
+    const newEx: Exercise = { id: Date.now(), name: item.name, category: item.category, description: item.description };
+    if (caseTitle.trim() !== '') {
+      setPendingCaseHep((prev) => (prev.some((p) => p.name === newEx.name) ? prev : [newEx, ...prev]));
+    } else {
+      setExercises((prev) => (prev.some((p) => p.name === newEx.name) ? prev : [newEx, ...prev]));
+    }
     setQuery("");
     setLibraryResults([]);
   }
@@ -95,13 +95,36 @@ export default function NewHEP() {
     setExercises((prev) => prev.filter((x) => x.id !== id));
   }
 
+  function removeCaseExercise(caseId: string | number, exId: number) {
+    setCases((prev) => prev.map((c) => {
+      if (String(c.id) === String(caseId)) {
+        return { ...c, hep: (c.hep || []).filter((h) => h.id !== exId) };
+      }
+      return c;
+    }));
+  }
+
+  function removePendingCaseExercise(exId: number) {
+    setPendingCaseHep((prev) => prev.filter((h) => h.id !== exId));
+  }
+
+  function addCase(e?: FormEvent) {
+    // kept for compatibility but not used in single-submit flow
+    // prefer adding a pending case by filling title/bodyParts and adding exercises, then submitting
+    return;
+  }
+
+  function removeCase(id: string | number) {
+    setCases((prev) => prev.filter((c) => String(c.id) !== String(id)));
+  }
+
   const filteredLocal = exercises.filter((ex) => ex.name.toLowerCase().includes(query.toLowerCase()));
 
   return (
     <div className="main">
       <Header />
       <div className="content">
-        <h2>New HEP</h2>
+        <h2>Create Patient</h2>
 
         <form className="patient-form" onSubmit={(e) => e.preventDefault()}>
           <div className="row">
@@ -143,20 +166,30 @@ export default function NewHEP() {
           </label>
         </form>
 
-        {/* Create/Update patient button moved below exercises for better flow */}
+        <section style={{ marginTop: 18 }}>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+            <h3>HEP Title/ Case: </h3>
+            <input placeholder="Case title" value={caseTitle} onChange={(e) => setCaseTitle(e.target.value)} />
+            <input placeholder="Body parts (comma separated)" value={caseBodyParts} onChange={(e) => setCaseBodyParts(e.target.value)} />
+          </div>
+        </section>
 
-        <section className="exercises">
+        <section className="exercises" style={{ marginTop: 18 }}>
           <h3>Exercises</h3>
 
-          <div className="exercise-search">
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search exercises (local + library)"
-            />
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8 }}>
+            <div style={{ flex: 1 }}>
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search exercises (local + library)"
+              />
+            </div>
+            <div style={{ padding: '6px 8px', color: '#666', fontSize: 13 }}>
+              {caseTitle.trim() !== '' ? `Adding exercises to new case: ${caseTitle}` : 'Adding exercises to patient HEP'}
+            </div>
           </div>
 
-          {/* show library results from backend */}
           {libraryResults.length > 0 && (
             <div style={{ marginBottom: 12, width: '100%', maxWidth: 900 }}>
               <strong>Library results</strong>
@@ -177,7 +210,7 @@ export default function NewHEP() {
           )}
 
           <div className="exercise-list" style={{ border: "1px solid #ddd", padding: 12, maxHeight: 320, overflow: "auto", width: '100%', maxWidth: 900 }}>
-            {filteredLocal.length === 0 ? (
+                {filteredLocal.length === 0 ? (
               <p style={{ color: "#666" }}>No exercises added.</p>
             ) : (
               filteredLocal.map((ex) => (
@@ -185,6 +218,7 @@ export default function NewHEP() {
                   <div>
                     <div style={{ fontWeight: 600 }}>{ex.name}</div>
                     {ex.description && <div style={{ fontSize: 12, color: '#666' }}>{ex.description}</div>}
+                    {caseTitle.trim() !== '' && <div style={{ fontSize: 12, color: '#666' }}>Will be added to new case</div>}
                   </div>
                   <button onClick={() => removeExercise(ex.id)} aria-label={`Remove ${ex.name}`} style={{ color: "#c00", background: "none", border: "none", cursor: "pointer" }}>
                     Remove
@@ -193,32 +227,31 @@ export default function NewHEP() {
               ))
             )}
           </div>
+
           <div style={{ marginTop: 12, marginBottom: 12 }}>
             <button
               onClick={async () => {
                 setSaveError(null);
                 setSavingPatient(true);
                 try {
-                  const payload = { firstName, lastName, contact, birthdate, hep: exercises };
-                  if (patientId) {
-                    const res = await fetch(`${BACKEND}/patients/${patientId}`, {
-                      method: 'PUT',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify(payload)
-                    });
-                    if (!res.ok) throw new Error('Failed to update patient');
-                    const updated = await res.json();
-                    router.push(`/patients/${updated.id}`);
-                  } else {
-                    const res = await fetch(`${BACKEND}/patients`, {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify(payload)
-                    });
-                    if (!res.ok) throw new Error('Failed to create patient');
-                    const created = await res.json();
-                    router.push(`/patients/${created.id}`);
+                  // include any pending (not-yet-added) case in the payload
+                  const finalCases = [...cases];
+                  if (caseTitle.trim() !== '' || pendingCaseHep.length > 0) {
+                    const bodyParts = caseBodyParts.split(',').map((s) => s.trim()).filter(Boolean);
+                    const newCase = { id: `case-${Date.now()}`, title: caseTitle.trim() || 'hep program', bodyParts, notes: caseNotes || '', hep: pendingCaseHep };
+                    finalCases.unshift(newCase);
                   }
+
+                  const payload: any = { firstName, lastName, contact, birthdate, hep: exercises, cases: finalCases };
+                  // always create a new patient from this page
+                  const res = await fetch(`${BACKEND}/patients`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                  });
+                                if (!res.ok) throw new Error('Failed to create patient');
+                                const created = await res.json();
+                                router.push(`/patients/${created.id}`);
                 } catch (e: any) {
                   setSaveError(String(e?.message || e));
                 } finally {
@@ -228,7 +261,7 @@ export default function NewHEP() {
               style={{ padding: '8px 12px', background: '#007da4', color: 'white', border: 'none', borderRadius: 8, cursor: 'pointer' }}
               disabled={savingPatient}
             >
-              {savingPatient ? 'Saving...' : patientId ? 'Update Patient' : 'Create Patient'}
+              {savingPatient ? 'Saving...' : 'Create Patient'}
             </button>
             <button
               onClick={() => router.push('/therapist-dashboard')}

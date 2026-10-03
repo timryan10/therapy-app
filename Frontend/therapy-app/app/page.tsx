@@ -23,14 +23,17 @@ export default function Home() {
   function handleSignIn(e: FormEvent) {
     e.preventDefault();
 
+    const u = username.trim();
+    const p = password.trim();
+
     if (role === "therapist") {
-      if (username === VALID_USERNAME && password === VALID_PASSWORD) {
+      if (u === VALID_USERNAME && p === VALID_PASSWORD) {
         setError("");
         router.push('/therapist-dashboard');
         return;
       }
     } else {
-      if (username === VALID_PATIENT_USERNAME && password === VALID_PATIENT_PASSWORD) {
+      if (u === VALID_PATIENT_USERNAME && p === VALID_PATIENT_PASSWORD) {
         setError("");
         router.push('/patient-dashboard');
         return;

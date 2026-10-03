@@ -6,7 +6,25 @@
     "contact": "alice.j@example.com",
     "birthdate": "1988-04-12",
     "lastVisit": "2026-09-20",
-    "notes": "Knee pain, HEP assigned 2026-09-20"
+    "notes": "Knee pain, HEP assigned 2026-09-20",
+    "cases": [
+      {
+        "id": "case-p1-1",
+        "title": "Knee Rehab",
+        "bodyParts": [
+          "Lower Extremity"
+        ],
+        "notes": "Post-injury quad strengthening"
+      },
+      {
+        "id": "case-p1-2",
+        "title": "Ankle Mobility",
+        "bodyParts": [
+          "Lower Extremity"
+        ],
+        "notes": "Improve dorsiflexion"
+      }
+    ]
   },
   {
     "id": "p2",
@@ -15,7 +33,17 @@
     "contact": "marcus.lee@example.com",
     "birthdate": "1979-11-03",
     "lastVisit": "2026-09-25",
-    "notes": "Shoulder mobility work"
+    "notes": "Shoulder mobility work",
+    "cases": [
+      {
+        "id": "case-p2-1",
+        "title": "Shoulder Mobility",
+        "bodyParts": [
+          "Upper Extremity"
+        ],
+        "notes": "Improve ROM and reduce pain"
+      }
+    ]
   },
   {
     "id": "p3",
@@ -49,6 +77,16 @@
         "name": "Calf Raises",
         "category": "Lower Extremity",
         "description": "Standing calf raises to strengthen the calf muscles."
+      }
+    ],
+    "cases": [
+      {
+        "id": "case-tim-1",
+        "title": "Calf/Achilles",
+        "bodyParts": [
+          "Lower Extremity"
+        ],
+        "notes": "Focus on calf strengthening"
       }
     ]
   },
@@ -84,6 +122,252 @@
       }
     ],
     "lastVisit": "2026-09-28",
+    "notes": ""
+  },
+  {
+    "id": "p1790640661120",
+    "firstName": "zeda",
+    "lastName": "stinky",
+    "contact": "zeda@example.com",
+    "birthdate": "2011-09-28",
+    "hep": [
+      {
+        "id": 1790640653941,
+        "name": "Knee Extension",
+        "category": "Lower Extremity",
+        "description": "Seated knee extension to strengthen quadriceps."
+      },
+      {
+        "id": 1790640628026,
+        "name": "Shoulder Pendulum",
+        "category": "Upper Extremity",
+        "description": "Pendulum swings to mobilize the shoulder joint."
+      },
+      {
+        "id": 1790640618096,
+        "name": "Calf Raises",
+        "category": "Lower Extremity",
+        "description": "Standing calf raises to strengthen the calf muscles."
+      }
+    ],
+    "lastVisit": "2026-09-29",
+    "notes": ""
+  },
+  {
+    "id": "p1790810499318",
+    "firstName": "another",
+    "lastName": "example",
+    "contact": "another@example",
+    "birthdate": "2000-01-01",
+    "hep": [
+      {
+        "id": 1790810495088,
+        "name": "Knee Extension",
+        "category": "Lower Extremity",
+        "description": "Seated knee extension to strengthen quadriceps."
+      }
+    ],
+    "lastVisit": "2026-09-30",
+    "notes": ""
+  },
+  {
+    "id": "p1790810657838",
+    "firstName": "E2E",
+    "lastName": "Tester",
+    "contact": "e2e@test.local",
+    "birthdate": "1990-01-01",
+    "hep": [
+      {
+        "id": 1,
+        "name": "Knee Extension"
+      },
+      {
+        "id": 2,
+        "name": "Hamstring Stretch"
+      }
+    ],
+    "lastVisit": "2026-09-30",
+    "notes": "created by e2e test"
+  },
+  {
+    "id": "p1790871780417",
+    "firstName": "liz",
+    "lastName": "example",
+    "contact": "liz@example",
+    "birthdate": "2000-01-01",
+    "hep": [
+      {
+        "id": 1790871773757,
+        "name": "Knee Extension",
+        "category": "Lower Extremity",
+        "description": "Seated knee extension to strengthen quadriceps."
+      }
+    ],
+    "lastVisit": "2026-10-01",
+    "notes": ""
+  },
+  {
+    "id": "p1790880153428",
+    "firstName": "tracy",
+    "lastName": "example",
+    "contact": "tracy@example.com",
+    "birthdate": "2000-01-01",
+    "hep": [
+      {
+        "id": 1790880149172,
+        "name": "Shoulder Pendulum",
+        "category": "Upper Extremity",
+        "description": "Pendulum swings to mobilize the shoulder joint."
+      }
+    ],
+    "cases": [
+      {
+        "id": "case-1790880139652",
+        "title": "Right Shoulder",
+        "bodyParts": [],
+        "notes": ""
+      }
+    ],
+    "lastVisit": "2026-10-01",
+    "notes": ""
+  },
+  {
+    "id": "p1790880225845",
+    "firstName": "nicole",
+    "lastName": "example",
+    "contact": "nicole@example.com",
+    "birthdate": "2000-01-01",
+    "hep": [],
+    "cases": [
+      {
+        "id": "case-1790880202939",
+        "title": "left shoulder",
+        "bodyParts": [],
+        "notes": "",
+        "hep": [
+          {
+            "id": 1790880223165,
+            "name": "Shoulder Pendulum",
+            "category": "Upper Extremity",
+            "description": "Pendulum swings to mobilize the shoulder joint."
+          }
+        ]
+      }
+    ],
+    "lastVisit": "2026-10-01",
+    "notes": ""
+  },
+  {
+    "id": "p1790881154300",
+    "firstName": "ana",
+    "lastName": "example",
+    "contact": "ana@example",
+    "birthdate": "2000-01-01",
+    "hep": [],
+    "cases": [
+      {
+        "id": "case-1790881154264",
+        "title": "Neck",
+        "bodyParts": [],
+        "notes": "",
+        "hep": [
+          {
+            "id": 1790881139412,
+            "name": "Shoulder Pendulum",
+            "category": "Upper Extremity",
+            "description": "Pendulum swings to mobilize the shoulder joint."
+          }
+        ]
+      }
+    ],
+    "lastVisit": "2026-10-01",
+    "notes": ""
+  },
+  {
+    "id": "p1791057179470",
+    "firstName": "tim",
+    "lastName": "example",
+    "contact": "tim@example",
+    "birthdate": "2000-01-01",
+    "hep": [],
+    "cases": [
+      {
+        "id": "case-1791057179414",
+        "title": "right knee",
+        "bodyParts": [],
+        "notes": "",
+        "hep": [
+          {
+            "id": 1791057152823,
+            "name": "Hamstring Stretch",
+            "category": "Lower Extremity",
+            "description": "Standing hamstring stretch for flexibility."
+          },
+          {
+            "id": 1791057138994,
+            "name": "Calf Raises",
+            "category": "Lower Extremity",
+            "description": "Standing calf raises to strengthen the calf muscles."
+          }
+        ]
+      }
+    ],
+    "lastVisit": "2026-10-03",
+    "notes": ""
+  },
+  {
+    "id": "p1791060639203",
+    "firstName": "mit",
+    "lastName": "example",
+    "contact": "5552380672",
+    "birthdate": "2000-01-01",
+    "hep": [
+      {
+        "id": 1791060631488,
+        "name": "Knee Extension",
+        "category": "Lower Extremity",
+        "description": "Seated knee extension to strengthen quadriceps."
+      }
+    ],
+    "cases": [],
+    "lastVisit": "2026-10-03",
+    "notes": ""
+  },
+  {
+    "id": "p1791061189539",
+    "firstName": "matt",
+    "lastName": "example",
+    "contact": "matt@example.com",
+    "birthdate": "2000-01-01",
+    "hep": [
+      {
+        "id": 1791061187705,
+        "name": "Knee Extension",
+        "category": "Lower Extremity",
+        "description": "Seated knee extension to strengthen quadriceps."
+      }
+    ],
+    "cases": [],
+    "lastVisit": "2026-10-03",
+    "notes": ""
+  },
+  {
+    "id": "p1791061231572",
+    "firstName": "mutt",
+    "lastName": "example",
+    "contact": "example@example.com",
+    "birthdate": "2000-01-01",
+    "hep": [],
+    "cases": [
+      {
+        "id": "case-1791061231561",
+        "title": "knee",
+        "bodyParts": [],
+        "notes": "",
+        "hep": []
+      }
+    ],
+    "lastVisit": "2026-10-03",
     "notes": ""
   }
 ]

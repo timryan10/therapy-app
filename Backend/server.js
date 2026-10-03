@@ -194,6 +194,7 @@ app.post('/patients', (req, res) => {
       contact: contact || '',
       birthdate: birthdate || '',
       hep: body.hep || [],
+      cases: body.cases || [],
       lastVisit: new Date().toISOString().slice(0,10),
       notes: notes || ''
     };
@@ -229,6 +230,7 @@ app.put('/patients/:id', (req, res) => {
       contact: body.contact !== undefined ? body.contact : items[idx].contact,
       birthdate: body.birthdate !== undefined ? body.birthdate : items[idx].birthdate,
       hep: body.hep !== undefined ? body.hep : (items[idx].hep || []),
+      cases: body.cases !== undefined ? body.cases : (items[idx].cases || []),
       lastVisit: body.lastVisit !== undefined ? body.lastVisit : items[idx].lastVisit,
       notes: body.notes !== undefined ? body.notes : items[idx].notes,
     });
@@ -238,6 +240,109 @@ app.put('/patients/:id', (req, res) => {
     fs.writeFile(PATIENTS_PATH, JSON.stringify(items, null, 2), 'utf8', (werr) => {
       if (werr) return res.status(500).json({ error: 'Failed to update patient' });
       res.json(updated);
+    });
+  });
+});
+
+// --- Cases endpoints for a patient ---
+
+// get all cases for a patient
+app.get('/patients/:id/cases', (req, res) => {
+  const id = req.params.id;
+  fs.readFile(PATIENTS_PATH, 'utf8', (err, data) => {
+    if (err) return res.status(500).json({ error: 'Failed to read patients' });
+    let items = [];
+    try {
+      items = JSON.parse(data);
+    } catch (e) {
+      return res.status(500).json({ error: 'Invalid patients data' });
+    }
+    const patient = items.find((p) => p.id === id);
+    if (!patient) return res.status(404).json({ error: 'Patient not found' });
+    res.json(patient.cases || []);
+  });
+});
+
+// add a new case to a patient
+app.post('/patients/:id/cases', (req, res) => {
+  const id = req.params.id;
+  const body = req.body || {};
+  if (!body.title || !Array.isArray(body.bodyParts)) return res.status(400).json({ error: 'Invalid case payload' });
+
+  fs.readFile(PATIENTS_PATH, 'utf8', (err, data) => {
+    if (err) return res.status(500).json({ error: 'Failed to read patients' });
+    let items = [];
+    try {
+      items = JSON.parse(data);
+    } catch (e) {
+      return res.status(500).json({ error: 'Invalid patients data' });
+    }
+
+    const idx = items.findIndex((p) => p.id === id);
+    if (idx === -1) return res.status(404).json({ error: 'Patient not found' });
+
+    const newCase = Object.assign({ id: `case-${Date.now()}`, hep: [] }, body);
+    items[idx].cases = items[idx].cases || [];
+    items[idx].cases.push(newCase);
+
+    fs.writeFile(PATIENTS_PATH, JSON.stringify(items, null, 2), 'utf8', (werr) => {
+      if (werr) return res.status(500).json({ error: 'Failed to save case' });
+      res.status(201).json(newCase);
+    });
+  });
+});
+
+// update a case by id
+app.put('/patients/:id/cases/:caseId', (req, res) => {
+  const id = req.params.id;
+  const caseId = req.params.caseId;
+  const body = req.body || {};
+
+  fs.readFile(PATIENTS_PATH, 'utf8', (err, data) => {
+    if (err) return res.status(500).json({ error: 'Failed to read patients' });
+    let items = [];
+    try {
+      items = JSON.parse(data);
+    } catch (e) {
+      return res.status(500).json({ error: 'Invalid patients data' });
+    }
+
+    const pIdx = items.findIndex((p) => p.id === id);
+    if (pIdx === -1) return res.status(404).json({ error: 'Patient not found' });
+    const cases = items[pIdx].cases || [];
+    const cIdx = cases.findIndex((c) => String(c.id) === String(caseId));
+    if (cIdx === -1) return res.status(404).json({ error: 'Case not found' });
+
+    const updatedCase = Object.assign({}, cases[cIdx], body);
+    items[pIdx].cases[cIdx] = updatedCase;
+
+    fs.writeFile(PATIENTS_PATH, JSON.stringify(items, null, 2), 'utf8', (werr) => {
+      if (werr) return res.status(500).json({ error: 'Failed to update case' });
+      res.json(updatedCase);
+    });
+  });
+});
+
+// delete a case
+app.delete('/patients/:id/cases/:caseId', (req, res) => {
+  const id = req.params.id;
+  const caseId = req.params.caseId;
+  fs.readFile(PATIENTS_PATH, 'utf8', (err, data) => {
+    if (err) return res.status(500).json({ error: 'Failed to read patients' });
+    let items = [];
+    try {
+      items = JSON.parse(data);
+    } catch (e) {
+      return res.status(500).json({ error: 'Invalid patients data' });
+    }
+
+    const pIdx = items.findIndex((p) => p.id === id);
+    if (pIdx === -1) return res.status(404).json({ error: 'Patient not found' });
+    items[pIdx].cases = (items[pIdx].cases || []).filter((c) => String(c.id) !== String(caseId));
+
+    fs.writeFile(PATIENTS_PATH, JSON.stringify(items, null, 2), 'utf8', (werr) => {
+      if (werr) return res.status(500).json({ error: 'Failed to delete case' });
+      res.json({ ok: true });
     });
   });
 });

@@ -12,7 +12,7 @@ export default function Header() {
         <ul>
           <li><Link href="/therapist-library">My Library</Link></li>
           <li><Link href="/exercises">Exercises</Link></li>
-          <li><Link href="/patients">Patients</Link></li>
+          <li><Link href="/existing-patients">Patients</Link></li>
         </ul>
       </nav>
     </div>
