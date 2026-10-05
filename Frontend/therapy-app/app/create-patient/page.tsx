@@ -64,9 +64,9 @@ export default function CreatePatient() {
     return () => clearTimeout(t);
   }, [query]);
 
-  function addExercise(e?: FormEvent) {
+  function addExercise(e?: FormEvent, nameArg?: string) {
     e?.preventDefault?.();
-    const name = exerciseName.trim();
+    const name = (nameArg || exerciseName || query).trim();
     if (!name) return;
     const newEx: Exercise = { id: Date.now(), name };
     // if therapist has started entering a case title, attach to the pending case
@@ -118,7 +118,10 @@ export default function CreatePatient() {
     setCases((prev) => prev.filter((c) => String(c.id) !== String(id)));
   }
 
-  const filteredLocal = exercises.filter((ex) => ex.name.toLowerCase().includes(query.toLowerCase()));
+  // Show the full list of added exercises (for the pending case or patient HEP).
+  // We avoid filtering this list by the search `query` so therapists always see
+  // what they've already added while they search the library.
+  const displayedExercises = (caseTitle.trim() !== '' ? pendingCaseHep : exercises);
 
   return (
     <div className="main">
@@ -182,6 +185,12 @@ export default function CreatePatient() {
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addExercise();
+                  }
+                }}
                 placeholder="Search exercises (local + library)"
               />
             </div>
@@ -210,17 +219,17 @@ export default function CreatePatient() {
           )}
 
           <div className="exercise-list" style={{ border: "1px solid #ddd", padding: 12, maxHeight: 320, overflow: "auto", width: '100%', maxWidth: 900 }}>
-                {filteredLocal.length === 0 ? (
+            {displayedExercises.length === 0 ? (
               <p style={{ color: "#666" }}>No exercises added.</p>
             ) : (
-              filteredLocal.map((ex) => (
+              displayedExercises.map((ex) => (
                 <div key={ex.id} style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: "1px solid #f0f0f0" }}>
                   <div>
                     <div style={{ fontWeight: 600 }}>{ex.name}</div>
                     {ex.description && <div style={{ fontSize: 12, color: '#666' }}>{ex.description}</div>}
                     {caseTitle.trim() !== '' && <div style={{ fontSize: 12, color: '#666' }}>Will be added to new case</div>}
                   </div>
-                  <button onClick={() => removeExercise(ex.id)} aria-label={`Remove ${ex.name}`} style={{ color: "#c00", background: "none", border: "none", cursor: "pointer" }}>
+                  <button onClick={() => { if (caseTitle.trim() !== '') removePendingCaseExercise(ex.id); else removeExercise(ex.id); }} aria-label={`Remove ${ex.name}`} style={{ color: "#c00", background: "none", border: "none", cursor: "pointer" }}>
                     Remove
                   </button>
                 </div>

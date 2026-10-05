@@ -47,8 +47,10 @@ export default async function CaseExercisesPage({ params }: { params: any }) {
       );
     }
 
-    // Filter exercises by case bodyParts matching exercise.category
-    const filtered = exercises.filter((e) => theCase.bodyParts.includes(e.category || ''));
+    // Prefer exercises attached directly to the case (theCase.hep). If none, fall back
+    // to library suggestions filtered by bodyParts matching exercise.category.
+    const caseHep: Exercise[] = (theCase.hep || []).map((h: any) => ({ id: h.id, name: h.name, category: h.category, description: h.description }));
+    const filtered = caseHep.length > 0 ? caseHep : exercises.filter((e) => theCase.bodyParts.includes(e.category || ''));
 
     return (
       <div className="main">
@@ -57,7 +59,6 @@ export default async function CaseExercisesPage({ params }: { params: any }) {
           <div style={{ width: '100%', maxWidth: 900 }}>
             <h2 style={{ margin: 0 }}>{theCase.title}</h2>
             <div style={{ color: '#666', marginBottom: 12 }}>{theCase.bodyParts.join(', ')}</div>
-
             {filtered.length === 0 ? (
               <div style={{ color: '#666' }}>No exercises found for this case.</div>
             ) : (
@@ -65,8 +66,8 @@ export default async function CaseExercisesPage({ params }: { params: any }) {
                 {filtered.map((ex) => (
                   <div key={ex.id} style={{ padding: '8px 0', borderBottom: '1px solid #f7f7f7' }}>
                     <div style={{ fontWeight: 600 }}>{ex.name}</div>
-                    <div style={{ color: '#666' }}>{ex.description}</div>
-                    <div style={{ color: '#999', fontSize: 13 }}>{ex.category}</div>
+                    {ex.description && <div style={{ color: '#666' }}>{ex.description}</div>}
+                    {ex.category && <div style={{ color: '#999', fontSize: 13 }}>{ex.category}</div>}
                   </div>
                 ))}
               </div>

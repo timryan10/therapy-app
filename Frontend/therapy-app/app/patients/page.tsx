@@ -58,7 +58,6 @@ export default function PatientsListPage() {
       <Header />
       <div className="content">
         <h2>Patients</h2>
-        <p>Search for a patient by name, contact or notes. No patient list is preloaded.</p>
 
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 12 }}>
           <input
@@ -68,12 +67,6 @@ export default function PatientsListPage() {
             placeholder="Search patients by name, contact or notes"
             style={{ padding: '8px 10px', flex: 1, borderRadius: 6, border: '1px solid #ccc' }}
           />
-          <button
-            onClick={() => doSearch(query)}
-            style={{ padding: '8px 12px', borderRadius: 6, background: '#007da4', color: '#fff', border: 'none' }}
-          >
-            Search
-          </button>
           <button
             onClick={() => { setQuery(''); setResults(null); setError(null); }}
             style={{ padding: '8px 12px', borderRadius: 6, background: '#eee', color: '#222', border: 'none' }}
@@ -103,9 +96,7 @@ export default function PatientsListPage() {
             </ul>
           )}
 
-          {!results && !loading && (
-            <div style={{ marginTop: 12, color: '#666' }}>Type a few letters and press Search.</div>
-          )}
+          {/* No preloaded list; results appear as therapist types. */}
         </div>
       </div>
     </div>
