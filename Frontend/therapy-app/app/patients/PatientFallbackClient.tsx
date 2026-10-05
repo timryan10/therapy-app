@@ -73,7 +73,7 @@ export default function PatientFallbackClient({ id }: { id: string }) {
       <div style={{ color: '#666', marginBottom: 12 }}>{error}</div>
       <div style={{ display: 'flex', gap: 8 }}>
         <button onClick={() => load()} style={{ padding: '8px 12px', borderRadius: 6, background: '#007da4', color: '#fff', border: 'none' }}>Retry</button>
-        <a href="/existing-patients" style={{ padding: '8px 12px', borderRadius: 6, background: '#eee', color: '#222', textDecoration: 'none' }}>Back to Patients</a>
+        <a href="/patients" style={{ padding: '8px 12px', borderRadius: 6, background: '#eee', color: '#222', textDecoration: 'none' }}>Back to Patients</a>
       </div>
     </div>
   );

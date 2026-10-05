@@ -53,7 +53,7 @@ export default function Page() {
             </button>
           </Link>
 
-          <Link href="/existing-patients">
+          <Link href="/patients">
             <button className="action-button existing-patients">
               <h2>Existing Patients</h2>
             </button>
