@@ -1,5 +1,6 @@
 import Header from "../../../components/TherapistHeader";
 import PatientClient from "../PatientClient";
+import PatientEditClient from "../PatientEditClient";
 import PatientFallbackClient from "../../PatientFallbackClient";
 import { notFound } from "next/navigation";
 
@@ -60,7 +61,7 @@ export default async function EditPatientPage({ params }: { params: any }) {
         <div className="content">
           <div style={{ width: '100%', maxWidth: 900 }}>
             <h2>Edit Patient</h2>
-            <PatientClient patient={patient} exercises={exercises} />
+            <PatientEditClient patient={patient} />
           </div>
         </div>
       </div>

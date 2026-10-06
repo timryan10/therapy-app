@@ -372,7 +372,7 @@
   },
   {
     "id": "p1791231807004",
-    "firstName": "sieway",
+    "firstName": "way",
     "lastName": "example",
     "contact": "sieway@example.com",
     "birthdate": "2000-01-01",
@@ -668,6 +668,32 @@
             "name": "Shoulder Pendulum",
             "category": "Upper Extremity",
             "description": "Pendulum swings to mobilize the shoulder joint."
+          }
+        ]
+      }
+    ],
+    "lastVisit": "2026-10-06",
+    "notes": ""
+  },
+  {
+    "id": "p1791307676528",
+    "firstName": "matt",
+    "lastName": "m",
+    "contact": "mattm@example",
+    "birthdate": "2000-01-01",
+    "hep": [],
+    "cases": [
+      {
+        "id": "case-1791307676489",
+        "title": "HEP Program",
+        "bodyParts": [],
+        "notes": "",
+        "hep": [
+          {
+            "id": 1791307630680,
+            "name": "Knee Extension",
+            "category": "Lower Extremity",
+            "description": "Seated knee extension to strengthen quadriceps."
           }
         ]
       }

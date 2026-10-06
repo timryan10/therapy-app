@@ -69,9 +69,6 @@ export default async function PatientPage({ params }: { params: any }) {
         <div className="content">
           <div style={{ width: '100%', maxWidth: 900 }}>
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
-              <Link href={`/patients/${patient.id}/edit`}>
-                <button style={{ padding: '8px 12px', background: '#eee', color: '#222', border: 'none', borderRadius: 8 }}>Edit Patient</button>
-              </Link>
             </div>
             <PatientClient patient={patient} exercises={exercises} />
           </div>

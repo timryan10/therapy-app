@@ -150,6 +150,7 @@ export default function CreatePatient() {
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
                 placeholder="First name"
+                style={{ padding: '6px 8px', border: '1px solid #ccc', borderRadius: 6 }}
               />
             </label>
             <label>
@@ -158,6 +159,7 @@ export default function CreatePatient() {
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
                 placeholder="Last name"
+                style={{ padding: '6px 8px', border: '1px solid #ccc', borderRadius: 6 }}
               />
             </label>
           </div>
@@ -168,6 +170,7 @@ export default function CreatePatient() {
               value={contact}
               onChange={(e) => setContact(e.target.value)}
               placeholder="Email or phone"
+              style={{ padding: '6px 8px', border: '1px solid #ccc', borderRadius: 6 }}
             />
           </label>
 
@@ -178,6 +181,7 @@ export default function CreatePatient() {
               value={birthdate}
               onChange={(e) => setBirthdate(e.target.value)}
               placeholder="YYYY-MM-DD"
+              style={{ padding: '6px 8px', border: '1px solid #ccc', borderRadius: 6 }}
             />
           </label>
         </form>
@@ -185,8 +189,8 @@ export default function CreatePatient() {
         <section style={{ marginTop: 18 }}>
           <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
             <h3>HEP Title/ Case: </h3>
-            <input placeholder="Case title(Optional)" value={caseTitle} onChange={(e) => setCaseTitle(e.target.value)} />
-            <input placeholder="Body parts" value={caseBodyParts} onChange={(e) => setCaseBodyParts(e.target.value)} />
+              <input placeholder="Case title(Optional)" value={caseTitle} onChange={(e) => setCaseTitle(e.target.value)} style={{ padding: '6px 8px', border: '1px solid #ccc', borderRadius: 6 }} />
+            <input placeholder="Body parts" value={caseBodyParts} onChange={(e) => setCaseBodyParts(e.target.value)} style={{ padding: '6px 8px', border: '1px solid #ccc', borderRadius: 6 }} />
           </div>
         </section>
 
@@ -228,12 +232,11 @@ export default function CreatePatient() {
                         addExercise();
                       }
                     }}
-                    placeholder="Search exercises (local + library)"
+                    placeholder="Search exercises"
+                    style={{ padding: '6px 8px', border: '1px solid #ccc', borderRadius: 6, width: '100%' }}
                   />
                 </div>
-                <div style={{ padding: '6px 8px', color: '#666', fontSize: 13 }}>
-                  {caseTitle.trim() !== '' ? `Adding exercises to new case: ${caseTitle}` : 'Adding exercises to patient HEP'}
-                </div>
+                
               </div>
             </div>
 

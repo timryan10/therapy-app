@@ -1,12 +1,3 @@
 {
-  "therapist1": [
-    {
-      "id": 5,
-      "name": "Calf Raises",
-      "category": "Lower Extremity",
-      "difficulty": "Easy",
-      "description": "Standing calf raises to strengthen the calf muscles.",
-      "duration": "3 sets of 12"
-    }
-  ]
+  "therapist1": []
 }
