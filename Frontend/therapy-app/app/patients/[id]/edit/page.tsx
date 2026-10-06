@@ -1,7 +1,6 @@
-import Header from "../../components/TherapistHeader";
-import Link from "next/link";
-import PatientClient from "./PatientClient";
-import PatientFallbackClient from "../PatientFallbackClient";
+import Header from "../../../components/TherapistHeader";
+import PatientClient from "../PatientClient";
+import PatientFallbackClient from "../../PatientFallbackClient";
 import { notFound } from "next/navigation";
 
 const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:4000";
@@ -30,19 +29,13 @@ type Exercise = {
   description?: string;
 };
 
-export default async function PatientPage({ params }: { params: any }) {
-  // params may be a Promise in dev; unwrap it
+export default async function EditPatientPage({ params }: { params: any }) {
+  // unwrap possibly-promise params
   // eslint-disable-next-line no-param-reassign
   params = await params;
-
   const { id } = params as { id?: string };
-  if (!id) {
-    notFound();
-  }
+  if (!id) notFound();
 
-  // Attempt server-side fetch. If backend explicitly returns 404, call notFound().
-  // For transient failures (network errors or non-404 responses) render a
-  // client-side fallback that will retry from the browser.
   try {
     const pRes = await fetch(`${BACKEND}/patients/${id}`, { cache: 'no-store' });
     if (!pRes.ok) {
@@ -51,9 +44,7 @@ export default async function PatientPage({ params }: { params: any }) {
         <div className="main">
           <Header />
           <div className="content">
-            <div style={{ width: '100%', maxWidth: 900 }}>
-              <PatientFallbackClient id={id} />
-            </div>
+            <PatientFallbackClient id={id} />
           </div>
         </div>
       );
@@ -68,11 +59,7 @@ export default async function PatientPage({ params }: { params: any }) {
         <Header />
         <div className="content">
           <div style={{ width: '100%', maxWidth: 900 }}>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
-              <Link href={`/patients/${patient.id}/edit`}>
-                <button style={{ padding: '8px 12px', background: '#eee', color: '#222', border: 'none', borderRadius: 8 }}>Edit Patient</button>
-              </Link>
-            </div>
+            <h2>Edit Patient</h2>
             <PatientClient patient={patient} exercises={exercises} />
           </div>
         </div>
@@ -83,11 +70,9 @@ export default async function PatientPage({ params }: { params: any }) {
       <div className="main">
         <Header />
         <div className="content">
-          <div style={{ width: '100%', maxWidth: 900 }}>
-            <PatientFallbackClient id={id} />
-          </div>
+          <PatientFallbackClient id={id} />
         </div>
       </div>
     );
-  };
+  }
 }

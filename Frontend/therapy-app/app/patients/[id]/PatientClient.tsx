@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 type Patient = {
   id: string;
@@ -31,28 +32,6 @@ const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:4000";
 
 export default function PatientClient({ patient, exercises }: { patient: Patient; exercises: Exercise[] }) {
   const router = useRouter();
-  const [firstNameState, setFirstNameState] = useState<string>(patient.firstName || "");
-  const [lastNameState, setLastNameState] = useState<string>(patient.lastName || "");
-  const [contactState, setContactState] = useState<string>(patient.contact || "");
-  const [birthdateState, setBirthdateState] = useState<string>(patient.birthdate || "");
-  const [savingInfo, setSavingInfo] = useState(false);
-
-  async function savePatientInfo() {
-    setSavingInfo(true);
-    try {
-      const payload: any = { firstName: firstNameState, lastName: lastNameState, contact: contactState, birthdate: birthdateState };
-      await fetch(`${BACKEND}/patients/${patient.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      router.refresh();
-    } catch (err) {
-      console.error('Failed to save patient info', err);
-    } finally {
-      setSavingInfo(false);
-    }
-  }
 
   return (
     <div>
@@ -60,18 +39,19 @@ export default function PatientClient({ patient, exercises }: { patient: Patient
 
       <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 12 }}>
         <div style={{ flex: 1 }}>
-          <div style={{ display: 'flex', gap: 12 }}>
-            <input value={firstNameState} onChange={(e) => setFirstNameState(e.target.value)} placeholder="First name" />
-            <input value={lastNameState} onChange={(e) => setLastNameState(e.target.value)} placeholder="Last name" />
+          <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+            <div style={{ fontWeight: 700, fontSize: '1.05rem' }}>{patient.firstName} {patient.lastName}</div>
+            {patient.contact && <div style={{ color: '#666' }}>{patient.contact}</div>}
           </div>
           <div style={{ marginTop: 8 }}>
-            <input value={contactState} onChange={(e) => setContactState(e.target.value)} placeholder="Email or phone" />
-            <input style={{ marginLeft: 8 }} type="date" value={birthdateState || ''} onChange={(e) => setBirthdateState(e.target.value)} />
+            {patient.birthdate && <div>Birthdate: {patient.birthdate}</div>}
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
+          <Link href={`/patients/${patient.id}/edit`}>
+            <button style={{ padding: '8px 12px', background: '#eee', color: '#222', border: 'none', borderRadius: 8 }}>Edit Patient</button>
+          </Link>
           <button onClick={() => router.push('/therapist-dashboard')} style={{ background: '#eee', color: '#222', border: 'none', padding: '8px 12px', borderRadius: 8 }}>Back to Dashboard</button>
-          <button onClick={savePatientInfo} disabled={savingInfo} style={{ background: '#007da4', color: 'white', border: 'none', padding: '8px 12px', borderRadius: 8 }}>{savingInfo ? 'Saving...' : 'Save Patient'}</button>
         </div>
       </div>
 
@@ -87,8 +67,12 @@ export default function PatientClient({ patient, exercises }: { patient: Patient
             {patient.cases.map((c) => (
               <div key={String(c.id)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid #fafafa' }}>
                 <div>
-                  <div style={{ fontWeight: 600 }}>{c.title}</div>
-                  <div style={{ color: '#666', fontSize: 13 }}>{c.bodyParts.join(', ')}</div>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
+                    <div style={{ fontWeight: 600 }}>{c.title}</div>
+                    {c.bodyParts && c.bodyParts.length > 0 && (
+                      <div style={{ color: '#666', fontSize: 13 }}>{c.bodyParts.join(', ')}</div>
+                    )}
+                  </div>
                 </div>
                 <div>
                   <button onClick={() => router.push(`/patients/${patient.id}/cases/${c.id}`)} style={{ background: '#007da4', color: 'white', border: 'none', padding: '6px 10px', borderRadius: 6 }}>View Exercises</button>

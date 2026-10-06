@@ -186,7 +186,7 @@ export default function CreatePatient() {
           <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
             <h3>HEP Title/ Case: </h3>
             <input placeholder="Case title(Optional)" value={caseTitle} onChange={(e) => setCaseTitle(e.target.value)} />
-            <input placeholder="Body parts (comma separated)" value={caseBodyParts} onChange={(e) => setCaseBodyParts(e.target.value)} />
+            <input placeholder="Body parts" value={caseBodyParts} onChange={(e) => setCaseBodyParts(e.target.value)} />
           </div>
         </section>
 

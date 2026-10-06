@@ -57,8 +57,12 @@ export default async function CaseExercisesPage({ params }: { params: any }) {
         <Header />
         <div className="content">
           <div style={{ width: '100%', maxWidth: 900 }}>
-            <h2 style={{ margin: 0 }}>{theCase.title}</h2>
-            <div style={{ color: '#666', marginBottom: 12 }}>{theCase.bodyParts.join(', ')}</div>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 12 }}>
+              <h2 style={{ margin: 0 }}>{theCase.title}</h2>
+              {theCase.bodyParts && theCase.bodyParts.length > 0 && (
+                <div style={{ color: '#666' }}>{theCase.bodyParts.join(', ')}</div>
+              )}
+            </div>
             {filtered.length === 0 ? (
               <div style={{ color: '#666' }}>No exercises found for this case.</div>
             ) : (
