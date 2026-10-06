@@ -35,6 +35,7 @@ export default function CreatePatient() {
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [query, setQuery] = useState("");
   const [libraryResults, setLibraryResults] = useState<Exercise[]>([]);
+  const [libMode, setLibMode] = useState<'library' | 'my'>('library');
 
   const [cases, setCases] = useState<CaseItem[]>([]);
   const [caseTitle, setCaseTitle] = useState("");
@@ -55,14 +56,26 @@ export default function CreatePatient() {
     }
 
     const t = setTimeout(() => {
-      fetch(`${BACKEND}/exercises/search?q=${encodeURIComponent(query)}`)
-        .then((r) => r.json())
-        .then((data) => setLibraryResults(data))
-        .catch(() => setLibraryResults([]));
+      if (libMode === 'library') {
+        fetch(`${BACKEND}/exercises/search?q=${encodeURIComponent(query)}`)
+          .then((r) => r.json())
+          .then((data) => setLibraryResults(Array.isArray(data) ? data : []))
+          .catch(() => setLibraryResults([]));
+      } else {
+        // My Library: fetch therapist favorites then filter client-side
+        fetch(`${BACKEND}/therapists/therapist1/favorites`)
+          .then((r) => r.json())
+          .then((data) => {
+            const arr = Array.isArray(data) ? data : [];
+            const filtered = arr.filter((ex: Exercise) => ex.name.toLowerCase().includes(query.toLowerCase()));
+            setLibraryResults(filtered);
+          })
+          .catch(() => setLibraryResults([]));
+      }
     }, 300);
 
     return () => clearTimeout(t);
-  }, [query]);
+  }, [query, libMode]);
 
   function addExercise(e?: FormEvent, nameArg?: string) {
     e?.preventDefault?.();
@@ -172,7 +185,7 @@ export default function CreatePatient() {
         <section style={{ marginTop: 18 }}>
           <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
             <h3>HEP Title/ Case: </h3>
-            <input placeholder="Case title" value={caseTitle} onChange={(e) => setCaseTitle(e.target.value)} />
+            <input placeholder="Case title(Optional)" value={caseTitle} onChange={(e) => setCaseTitle(e.target.value)} />
             <input placeholder="Body parts (comma separated)" value={caseBodyParts} onChange={(e) => setCaseBodyParts(e.target.value)} />
           </div>
         </section>
@@ -180,24 +193,49 @@ export default function CreatePatient() {
         <section className="exercises" style={{ marginTop: 18 }}>
           <h3>Exercises</h3>
 
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 8 }}>
-            <div style={{ flex: 1 }}>
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    addExercise();
-                  }
-                }}
-                placeholder="Search exercises (local + library)"
-              />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 8 }}>
+              <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                <div style={{ display: 'inline-flex', border: '1px solid #e6e6e6', borderRadius: 8, overflow: 'hidden' }} role="tablist" aria-label="Library toggle">
+                  <button
+                    type="button"
+                    aria-pressed={libMode === 'library'}
+                    onClick={() => setLibMode('library')}
+                    style={{ padding: '6px 10px', border: 'none', background: libMode === 'library' ? '#007da4' : 'white', color: libMode === 'library' ? 'white' : '#007da4', cursor: 'pointer' }}
+                  >
+                    Library
+                  </button>
+                  <button
+                    type="button"
+                    aria-pressed={libMode === 'my'}
+                    onClick={() => setLibMode('my')}
+                    style={{ padding: '6px 10px', border: 'none', background: libMode === 'my' ? '#007da4' : 'white', color: libMode === 'my' ? 'white' : '#007da4', cursor: 'pointer' }}
+                  >
+                    My Library
+                  </button>
+                </div>
+
+                <div style={{ color: '#666', fontSize: 13 }}>{libMode === 'library' ? 'Searching global library' : 'Searching My Library'}</div>
+              </div>
+
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <div style={{ flex: 1 }}>
+                  <input
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        addExercise();
+                      }
+                    }}
+                    placeholder="Search exercises (local + library)"
+                  />
+                </div>
+                <div style={{ padding: '6px 8px', color: '#666', fontSize: 13 }}>
+                  {caseTitle.trim() !== '' ? `Adding exercises to new case: ${caseTitle}` : 'Adding exercises to patient HEP'}
+                </div>
+              </div>
             </div>
-            <div style={{ padding: '6px 8px', color: '#666', fontSize: 13 }}>
-              {caseTitle.trim() !== '' ? `Adding exercises to new case: ${caseTitle}` : 'Adding exercises to patient HEP'}
-            </div>
-          </div>
 
           {libraryResults.length > 0 && (
             <div style={{ marginBottom: 12, width: '100%', maxWidth: 900 }}>
@@ -245,12 +283,45 @@ export default function CreatePatient() {
                 try {
                   // include any pending (not-yet-added) case in the payload
                   const finalCases = [...cases];
+
+                  // If therapist entered a case title or added pendingCaseHep, create a case using pendingCaseHep.
                   if (caseTitle.trim() !== '' || pendingCaseHep.length > 0) {
                     const bodyParts = caseBodyParts.split(',').map((s) => s.trim()).filter(Boolean);
-                    const newCase = { id: `case-${Date.now()}`, title: caseTitle.trim() || 'hep program', bodyParts, notes: caseNotes || '', hep: pendingCaseHep };
+                    const newCase = { id: `case-${Date.now()}`, title: caseTitle.trim() || 'HEP Program', bodyParts, notes: caseNotes || '', hep: pendingCaseHep };
                     finalCases.unshift(newCase);
+                    // keep top-level exercises separate
+                    const payload: any = { firstName, lastName, contact, birthdate, hep: exercises, cases: finalCases };
+                    const res = await fetch(`${BACKEND}/patients`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify(payload)
+                    });
+                    if (!res.ok) throw new Error('Failed to create patient');
+                    const created = await res.json();
+                    router.push(`/patients/${created.id}`);
+                    return;
                   }
 
+                  // If no case title and no pendingCaseHep but therapist added exercises,
+                  // create a default case titled 'HEP Program' containing those exercises,
+                  // and do not duplicate them at top-level `hep`.
+                  if (caseTitle.trim() === '' && pendingCaseHep.length === 0 && exercises.length > 0) {
+                    const bodyParts = caseBodyParts.split(',').map((s) => s.trim()).filter(Boolean);
+                    const newCase = { id: `case-${Date.now()}`, title: 'HEP Program', bodyParts, notes: caseNotes || '', hep: exercises };
+                    finalCases.unshift(newCase);
+                    const payload: any = { firstName, lastName, contact, birthdate, hep: [], cases: finalCases };
+                    const res = await fetch(`${BACKEND}/patients`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify(payload)
+                    });
+                    if (!res.ok) throw new Error('Failed to create patient');
+                    const created = await res.json();
+                    router.push(`/patients/${created.id}`);
+                    return;
+                  }
+
+                  // Default: no cases and no exercises to attach
                   const payload: any = { firstName, lastName, contact, birthdate, hep: exercises, cases: finalCases };
                   // always create a new patient from this page
                   const res = await fetch(`${BACKEND}/patients`, {
