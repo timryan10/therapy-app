@@ -32,7 +32,26 @@ export default function ExercisesPage() {
 
   useEffect(() => {
     load();
+    // also load therapist favorites so we can show saved state on buttons
+    loadFavorites();
   }, []);
+
+  // track which exercises are already saved to the therapist's library
+  const [favoriteIds, setFavoriteIds] = useState<Record<number, boolean>>({});
+
+  function loadFavorites() {
+    fetch(`${BACKEND}/therapists/therapist1/favorites`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (!Array.isArray(data)) return setFavoriteIds({});
+        const map: Record<number, boolean> = {};
+        data.forEach((d: any) => {
+          if (d && d.id != null) map[Number(d.id)] = true;
+        });
+        setFavoriteIds(map);
+      })
+      .catch(() => setFavoriteIds({}));
+  }
 
   // simple feedback state for saving to favorites
   const [favLoading, setFavLoading] = useState<Record<number, boolean>>({});
@@ -105,8 +124,9 @@ export default function ExercisesPage() {
                             </div>
                             <div style={{ display: 'flex', gap: 8 }}>
                               <button
-                                disabled={!!favLoading[ex.id]}
+                                disabled={!!favLoading[ex.id] || !!favoriteIds[ex.id]}
                                 onClick={() => {
+                                  if (favoriteIds[ex.id]) return;
                                   setFavError(null);
                                   setFavLoading((s) => ({ ...s, [ex.id]: true }));
                                   fetch(`${BACKEND}/therapists/therapist1/favorites`, {
@@ -115,19 +135,28 @@ export default function ExercisesPage() {
                                     body: JSON.stringify(ex)
                                   })
                                     .then((r) => {
-                                      if (r.status === 409) throw new Error('Already in My Library');
+                                      if (r.status === 409) {
+                                        // already saved; mark locally
+                                        setFavoriteIds((s) => ({ ...s, [ex.id]: true }));
+                                        return null;
+                                      }
                                       if (!r.ok) throw new Error('Failed to save favorite');
                                       return r.json();
                                     })
-                                    .then(() => setFavLoading((s) => ({ ...s, [ex.id]: false })))
+                                    .then(() => {
+                                      // mark saved locally
+                                      setFavoriteIds((s) => ({ ...s, [ex.id]: true }));
+                                    })
                                     .catch((err) => {
-                                      setFavLoading((s) => ({ ...s, [ex.id]: false }));
                                       setFavError(String(err.message || err));
+                                    })
+                                    .finally(() => {
+                                      setFavLoading((s) => ({ ...s, [ex.id]: false }));
                                     });
                                 }}
-                                style={{ padding: '6px 10px', borderRadius: 6, border: 'none', background: '#007da4', color: 'white', cursor: 'pointer' }}
+                                style={{ padding: '6px 10px', borderRadius: 6, border: 'none', background: favoriteIds[ex.id] ? '#6c757d' : '#007da4', color: 'white', cursor: favoriteIds[ex.id] ? 'default' : 'pointer', minWidth: 140, display: 'inline-flex', justifyContent: 'center', alignItems: 'center' }}
                               >
-                                {favLoading[ex.id] ? 'Saving...' : 'Save to My Library'}
+                                {favoriteIds[ex.id] ? 'Saved' : (favLoading[ex.id] ? 'Saving...' : 'Save to My Library')}
                               </button>
                             </div>
                           </div>

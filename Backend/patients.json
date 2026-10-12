@@ -507,7 +507,22 @@
         "description": "Seated knee extension to strengthen quadriceps."
       }
     ],
-    "cases": [],
+    "cases": [
+      {
+        "id": "case-1791328760916",
+        "hep": [
+          {
+            "id": 1791328759723,
+            "name": "Knee Extension",
+            "category": "Lower Extremity",
+            "description": "Seated knee extension to strengthen quadriceps."
+          }
+        ],
+        "title": "HEP Program",
+        "bodyParts": [],
+        "notes": ""
+      }
+    ],
     "lastVisit": "2026-10-06",
     "notes": ""
   },
@@ -699,6 +714,81 @@
       }
     ],
     "lastVisit": "2026-10-06",
+    "notes": ""
+  },
+  {
+    "id": "p1791464210909",
+    "firstName": "jenn",
+    "lastName": "example",
+    "contact": "jenna@example.com",
+    "birthdate": "2000-01-01",
+    "hep": [],
+    "cases": [
+      {
+        "id": "case-1791464210857",
+        "title": "HEP Program",
+        "bodyParts": [],
+        "notes": "",
+        "hep": [
+          {
+            "id": 1791464185452,
+            "name": "Knee Extension",
+            "category": "Lower Extremity",
+            "description": "Seated knee extension to strengthen quadriceps.",
+            "sets": 3,
+            "reps": 10
+          }
+        ]
+      }
+    ],
+    "lastVisit": "2026-10-08",
+    "notes": ""
+  },
+  {
+    "id": "p1791827929111",
+    "firstName": "nicole",
+    "lastName": "example",
+    "contact": "nicole@example",
+    "birthdate": "2000-01-01",
+    "hep": [],
+    "cases": [
+      {
+        "id": "case-1791827929067",
+        "title": "HEP Program",
+        "bodyParts": [
+          "knee"
+        ],
+        "notes": "",
+        "frequency": "3",
+        "hep": [
+          {
+            "id": 1791827884707,
+            "name": "Knee Extension",
+            "category": "Lower Extremity",
+            "description": "Seated knee extension to strengthen quadriceps.",
+            "sets": 3,
+            "reps": 10
+          }
+        ]
+      },
+      {
+        "id": "case-1791831387315",
+        "hep": [
+          {
+            "id": 1791831385007,
+            "name": "Calf Raises",
+            "category": "Lower Extremity",
+            "description": "Standing calf raises to strengthen the calf muscles.",
+            "sets": 3,
+            "reps": 10
+          }
+        ],
+        "title": "HEP Program",
+        "bodyParts": [],
+        "notes": ""
+      }
+    ],
+    "lastVisit": "2026-10-12",
     "notes": ""
   }
 ]

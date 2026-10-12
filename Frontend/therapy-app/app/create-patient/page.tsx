@@ -3,6 +3,7 @@
 import { useState, FormEvent, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Header from "../components/TherapistHeader";
+import ExercisePicker from "../components/ExercisePicker";
 
 type Exercise = {
   id: number;
@@ -41,6 +42,9 @@ export default function CreatePatient() {
   const [caseTitle, setCaseTitle] = useState("");
   const [caseBodyParts, setCaseBodyParts] = useState("");
   const [caseNotes, setCaseNotes] = useState("");
+  const [caseFrequency, setCaseFrequency] = useState("");
+  const [caseDefaultSets, setCaseDefaultSets] = useState<number>(3);
+  const [caseDefaultReps, setCaseDefaultReps] = useState<number>(10);
   // if a case title is entered on the form, exercises will be attached to that pending case
   const [pendingCaseHep, setPendingCaseHep] = useState<Exercise[]>([]);
 
@@ -81,7 +85,7 @@ export default function CreatePatient() {
     e?.preventDefault?.();
     const name = (nameArg || exerciseName || query).trim();
     if (!name) return;
-    const newEx: Exercise = { id: Date.now(), name };
+    const newEx: Exercise = { id: Date.now(), name, sets: caseDefaultSets, reps: caseDefaultReps } as any;
     // if therapist has started entering a case title, attach to the pending case
     if (caseTitle.trim() !== '') {
       setPendingCaseHep((prev) => (prev.some((p) => p.name === newEx.name) ? prev : [newEx, ...prev]));
@@ -94,7 +98,7 @@ export default function CreatePatient() {
   }
 
   function addExerciseFromLibrary(item: Exercise) {
-    const newEx: Exercise = { id: Date.now(), name: item.name, category: item.category, description: item.description };
+    const newEx: Exercise = { id: Date.now(), name: item.name, category: item.category, description: item.description, sets: caseDefaultSets, reps: caseDefaultReps } as any;
     if (caseTitle.trim() !== '') {
       setPendingCaseHep((prev) => (prev.some((p) => p.name === newEx.name) ? prev : [newEx, ...prev]));
     } else {
@@ -186,97 +190,40 @@ export default function CreatePatient() {
           </label>
         </form>
 
-        <section style={{ marginTop: 18 }}>
-          <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-            <h3>HEP Title/ Case: </h3>
-              <input placeholder="Case title(Optional)" value={caseTitle} onChange={(e) => setCaseTitle(e.target.value)} style={{ padding: '6px 8px', border: '1px solid #ccc', borderRadius: 6 }} />
-            <input placeholder="Body parts" value={caseBodyParts} onChange={(e) => setCaseBodyParts(e.target.value)} style={{ padding: '6px 8px', border: '1px solid #ccc', borderRadius: 6 }} />
-          </div>
-        </section>
-
         <section className="exercises" style={{ marginTop: 18 }}>
           <h3>Exercises</h3>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 8 }}>
-              <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-                <div style={{ display: 'inline-flex', border: '1px solid #e6e6e6', borderRadius: 8, overflow: 'hidden' }} role="tablist" aria-label="Library toggle">
-                  <button
-                    type="button"
-                    aria-pressed={libMode === 'library'}
-                    onClick={() => setLibMode('library')}
-                    style={{ padding: '6px 10px', border: 'none', background: libMode === 'library' ? '#007da4' : 'white', color: libMode === 'library' ? 'white' : '#007da4', cursor: 'pointer' }}
-                  >
-                    Library
-                  </button>
-                  <button
-                    type="button"
-                    aria-pressed={libMode === 'my'}
-                    onClick={() => setLibMode('my')}
-                    style={{ padding: '6px 10px', border: 'none', background: libMode === 'my' ? '#007da4' : 'white', color: libMode === 'my' ? 'white' : '#007da4', cursor: 'pointer' }}
-                  >
-                    My Library
-                  </button>
-                </div>
-
-                <div style={{ color: '#666', fontSize: 13 }}>{libMode === 'library' ? 'Searching global library' : 'Searching My Library'}</div>
-              </div>
-
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                <div style={{ flex: 1 }}>
-                  <input
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        addExercise();
-                      }
-                    }}
-                    placeholder="Search exercises"
-                    style={{ padding: '6px 8px', border: '1px solid #ccc', borderRadius: 6, width: '100%' }}
-                  />
-                </div>
-                
-              </div>
-            </div>
-
-          {libraryResults.length > 0 && (
-            <div style={{ marginBottom: 12, width: '100%', maxWidth: 900 }}>
-              <strong>Library results</strong>
-              <div style={{ border: '1px solid #eee', padding: 8, borderRadius: 8 }}>
-                {libraryResults.map((it) => (
-                  <div key={it.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #f5f5f5' }}>
-                    <div>
-                      <div style={{ fontWeight: 600 }}>{it.name}</div>
-                      {it.category && <div style={{ fontSize: 12, color: '#666' }}>{it.category}</div>}
-                    </div>
-                    <div>
-                      <button onClick={() => addExerciseFromLibrary(it)} style={{ padding: '6px 10px', borderRadius: 6, border: 'none', background: '#007da4', color: 'white', cursor: 'pointer' }}>Add</button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <div className="exercise-list" style={{ border: "1px solid #ddd", padding: 12, maxHeight: 320, overflow: "auto", width: '100%', maxWidth: 900 }}>
-            {displayedExercises.length === 0 ? (
-              <p style={{ color: "#666" }}>No exercises added.</p>
-            ) : (
-              displayedExercises.map((ex) => (
-                <div key={ex.id} style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: "1px solid #f0f0f0" }}>
-                  <div>
-                    <div style={{ fontWeight: 600 }}>{ex.name}</div>
-                    {ex.description && <div style={{ fontSize: 12, color: '#666' }}>{ex.description}</div>}
-                    {caseTitle.trim() !== '' && <div style={{ fontSize: 12, color: '#666' }}>Will be added to new case</div>}
-                  </div>
-                  <button onClick={() => { if (caseTitle.trim() !== '') removePendingCaseExercise(ex.id); else removeExercise(ex.id); }} aria-label={`Remove ${ex.name}`} style={{ color: "#c00", background: "none", border: "none", cursor: "pointer" }}>
-                    Remove
-                  </button>
-                </div>
-              ))
-            )}
-          </div>
+          <ExercisePicker
+            libMode={libMode}
+            setLibMode={setLibMode}
+            query={query}
+            setQuery={setQuery}
+            libraryResults={libraryResults}
+            addExercise={addExercise}
+            addExerciseFromLibrary={addExerciseFromLibrary}
+            displayedExercises={displayedExercises}
+            isPending={caseTitle.trim() !== ''}
+            defaultSets={caseDefaultSets}
+            defaultReps={caseDefaultReps}
+            setDefaultSets={setCaseDefaultSets}
+            setDefaultReps={setCaseDefaultReps}
+            caseTitle={caseTitle}
+            setCaseTitle={setCaseTitle}
+            caseBodyParts={caseBodyParts}
+            setCaseBodyParts={setCaseBodyParts}
+            updateSets={(id, v) => {
+              if (caseTitle.trim() !== '') setPendingCaseHep((prev) => prev.map((p) => p.id === id ? ({ ...p, sets: v }) : p));
+              else setExercises((prev) => prev.map((p) => p.id === id ? ({ ...p, sets: v }) : p));
+            }}
+            updateReps={(id, v) => {
+              if (caseTitle.trim() !== '') setPendingCaseHep((prev) => prev.map((p) => p.id === id ? ({ ...p, reps: v }) : p));
+              else setExercises((prev) => prev.map((p) => p.id === id ? ({ ...p, reps: v }) : p));
+            }}
+            removeExercise={(id) => removeExercise(id)}
+            removePendingExercise={(id) => removePendingCaseExercise(id)}
+            frequency={caseFrequency}
+            setFrequency={setCaseFrequency}
+          />
 
           <div style={{ marginTop: 12, marginBottom: 12 }}>
             <button
@@ -290,7 +237,7 @@ export default function CreatePatient() {
                   // If therapist entered a case title or added pendingCaseHep, create a case using pendingCaseHep.
                   if (caseTitle.trim() !== '' || pendingCaseHep.length > 0) {
                     const bodyParts = caseBodyParts.split(',').map((s) => s.trim()).filter(Boolean);
-                    const newCase = { id: `case-${Date.now()}`, title: caseTitle.trim() || 'HEP Program', bodyParts, notes: caseNotes || '', hep: pendingCaseHep };
+                      const newCase = { id: `case-${Date.now()}`, title: caseTitle.trim() || 'HEP Program', bodyParts, notes: caseNotes || '', frequency: caseFrequency || undefined, hep: pendingCaseHep };
                     finalCases.unshift(newCase);
                     // keep top-level exercises separate
                     const payload: any = { firstName, lastName, contact, birthdate, hep: exercises, cases: finalCases };
@@ -310,7 +257,7 @@ export default function CreatePatient() {
                   // and do not duplicate them at top-level `hep`.
                   if (caseTitle.trim() === '' && pendingCaseHep.length === 0 && exercises.length > 0) {
                     const bodyParts = caseBodyParts.split(',').map((s) => s.trim()).filter(Boolean);
-                    const newCase = { id: `case-${Date.now()}`, title: 'HEP Program', bodyParts, notes: caseNotes || '', hep: exercises };
+                    const newCase = { id: `case-${Date.now()}`, title: 'HEP Program', bodyParts, notes: caseNotes || '', frequency: caseFrequency || undefined, hep: exercises };
                     finalCases.unshift(newCase);
                     const payload: any = { firstName, lastName, contact, birthdate, hep: [], cases: finalCases };
                     const res = await fetch(`${BACKEND}/patients`, {

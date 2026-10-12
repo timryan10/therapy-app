@@ -1,4 +1,5 @@
 import Header from "../../../../components/TherapistHeader";
+import EditCaseClient from "../EditCaseClient";
 import { notFound } from "next/navigation";
 
 const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:4000";
@@ -58,24 +59,10 @@ export default async function CaseExercisesPage({ params }: { params: any }) {
         <div className="content">
           <div style={{ width: '100%', maxWidth: 900 }}>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 12 }}>
-              <h2 style={{ margin: 0 }}>{theCase.title}</h2>
-              {theCase.bodyParts && theCase.bodyParts.length > 0 && (
-                <div style={{ color: '#666' }}>{theCase.bodyParts.join(', ')}</div>
-              )}
+              <h2 style={{ margin: 0 }}>{patient.firstName} {patient.lastName}</h2>
             </div>
-            {filtered.length === 0 ? (
-              <div style={{ color: '#666' }}>No exercises found for this case.</div>
-            ) : (
-              <div style={{ border: '1px solid #ddd', padding: 12, borderRadius: 8 }}>
-                {filtered.map((ex) => (
-                  <div key={ex.id} style={{ padding: '8px 0', borderBottom: '1px solid #f7f7f7' }}>
-                    <div style={{ fontWeight: 600 }}>{ex.name}</div>
-                    {ex.description && <div style={{ color: '#666' }}>{ex.description}</div>}
-                    {ex.category && <div style={{ color: '#999', fontSize: 13 }}>{ex.category}</div>}
-                  </div>
-                ))}
-              </div>
-            )}
+            {/* render editable case client: allows editing frequency and per-exercise sets/reps */}
+            <EditCaseClient patientId={id} caseData={theCase} />
           </div>
         </div>
       </div>

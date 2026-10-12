@@ -129,13 +129,6 @@ body {
   color: black;
 }
 
-.new-hep{
-  width: 100%;
-  background-color: rgb(3, 119, 3);
-  height: 100px;
-  border-radius: 10px;
-}
-
 .recent-hep{
   margin-top: 10px;
   width: 100%;
@@ -253,9 +246,12 @@ body {
   background-color: #005f7a;
 }
 
+/* restore create-patient action button styling */
 .action-button.new-hep {
-  background-color: rgb(3, 119, 3);
+  background-color: #007da4;
 }
+
+/* removed .new-hep button styles (page removed) */
 
 .patient-list {
   list-style: none;

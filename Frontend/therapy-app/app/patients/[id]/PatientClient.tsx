@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import ExercisePicker from "../../components/ExercisePicker";
 
 type Patient = {
   id: string;
@@ -42,12 +43,16 @@ export default function PatientClient({ patient, exercises }: { patient: Patient
   const [newBodyParts, setNewBodyParts] = useState("");
   const [newNotes, setNewNotes] = useState("");
   const [newHep, setNewHep] = useState<Exercise[]>([]);
+  const [newFrequency, setNewFrequency] = useState("");
+  const [newDefaultSets, setNewDefaultSets] = useState<number>(3);
+  const [newDefaultReps, setNewDefaultReps] = useState<number>(10);
 
   // search for exercises to add to the new case
   const [query, setQuery] = useState("");
   const [libraryResults, setLibraryResults] = useState<Exercise[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const searchDeb = useRef<any>(null);
+  const [libMode, setLibMode] = useState<'library' | 'my'>('library');
 
   useEffect(() => {
     if (!query) {
@@ -58,14 +63,27 @@ export default function PatientClient({ patient, exercises }: { patient: Patient
     if (searchDeb.current) window.clearTimeout(searchDeb.current);
     setSearchLoading(true);
     searchDeb.current = window.setTimeout(() => {
-      fetch(`${BACKEND}/exercises/search?q=${encodeURIComponent(query)}`)
-        .then((r) => r.json())
-        .then((data) => setLibraryResults(Array.isArray(data) ? data : []))
-        .catch(() => setLibraryResults([]))
-        .finally(() => setSearchLoading(false));
+      if (libMode === 'library') {
+        fetch(`${BACKEND}/exercises/search?q=${encodeURIComponent(query)}`)
+          .then((r) => r.json())
+          .then((data) => setLibraryResults(Array.isArray(data) ? data : []))
+          .catch(() => setLibraryResults([]))
+          .finally(() => setSearchLoading(false));
+      } else {
+        // My Library: fetch therapist favorites then filter client-side
+        fetch(`${BACKEND}/therapists/therapist1/favorites`)
+          .then((r) => r.json())
+          .then((data) => {
+            const arr = Array.isArray(data) ? data : [];
+            const filtered = arr.filter((ex: Exercise) => ex.name.toLowerCase().includes(query.toLowerCase()));
+            setLibraryResults(filtered);
+          })
+          .catch(() => setLibraryResults([]))
+          .finally(() => setSearchLoading(false));
+      }
     }, 300);
     return () => { if (searchDeb.current) window.clearTimeout(searchDeb.current); };
-  }, [query]);
+  }, [query, libMode]);
 
   return (
     <div>
@@ -94,7 +112,7 @@ export default function PatientClient({ patient, exercises }: { patient: Patient
         ) : (
           <div style={{ marginTop: 8, border: '1px solid #eee', padding: 8, borderRadius: 8 }}>
             {cases.map((c) => (
-              <div key={String(c.id)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid #fafafa' }}>
+              <div key={String(c.id)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid #ddd' }}>
                 <div>
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
                     <div style={{ fontWeight: 600 }}>{c.title}</div>
@@ -117,59 +135,48 @@ export default function PatientClient({ patient, exercises }: { patient: Patient
             <button onClick={() => setShowNewCase(true)} style={{ padding: '8px 10px', borderRadius: 6, background: '#007da4', color: 'white', border: 'none' }}>+ Add HEP Program</button>
           ) : (
             <div style={{ marginTop: 8, border: '1px solid #eee', padding: 12, borderRadius: 8, maxWidth: 900 }}>
-              <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-                <input placeholder="Program title" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} style={{ padding: '6px 8px', border: '1px solid #ccc', borderRadius: 6, flex: 1 }} />
-                <input placeholder="Body parts (comma-separated)" value={newBodyParts} onChange={(e) => setNewBodyParts(e.target.value)} style={{ padding: '6px 8px', border: '1px solid #ccc', borderRadius: 6, width: 260 }} />
-              </div>
-              <div style={{ marginBottom: 8 }}>
-                <textarea placeholder="Notes (optional)" value={newNotes} onChange={(e) => setNewNotes(e.target.value)} style={{ width: '100%', minHeight: 64, padding: '8px', border: '1px solid #ccc', borderRadius: 6 }} />
-              </div>
-
+              {/* Program title/bodyParts moved into ExercisePicker */}
+    
               <div style={{ marginBottom: 8 }}>
                 <div style={{ fontSize: 13, color: '#666', marginBottom: 6 }}>Add exercises to this program</div>
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                  <input placeholder="Search exercises" value={query} onChange={(e) => setQuery(e.target.value)} style={{ padding: '6px 8px', border: '1px solid #ccc', borderRadius: 6, flex: 1 }} />
-                  <div style={{ padding: '6px 8px', color: '#666', fontSize: 13 }}>{searchLoading ? 'Searching…' : ''}</div>
-                </div>
-                {libraryResults.length > 0 && (
-                  <div style={{ border: '1px solid #f0f0f0', padding: 8, borderRadius: 8, marginTop: 8 }}>
-                    {libraryResults.map((it) => (
-                      <div key={it.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid #fafafa' }}>
-                        <div>
-                          <div style={{ fontWeight: 600 }}>{it.name}</div>
-                          {it.category && <div style={{ fontSize: 12, color: '#666' }}>{it.category}</div>}
-                        </div>
-                        <div>
-                          <button onClick={() => { const newEx = { id: Date.now(), name: it.name, category: it.category, description: it.description }; setNewHep((p) => (p.some((x) => x.name === newEx.name) ? p : [newEx, ...p])); setQuery(''); setLibraryResults([]); }} style={{ padding: '6px 10px', borderRadius: 6, border: 'none', background: '#007da4', color: 'white', cursor: 'pointer' }}>Add</button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <div style={{ border: '1px solid #ddd', padding: 8, borderRadius: 8, maxHeight: 220, overflow: 'auto' }}>
-                {newHep.length === 0 ? (
-                  <div style={{ color: '#666' }}>No exercises added to this program yet.</div>
-                ) : (
-                  newHep.map((ex) => (
-                    <div key={ex.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid #f5f5f5' }}>
-                      <div>
-                        <div style={{ fontWeight: 600 }}>{ex.name}</div>
-                        {ex.description && <div style={{ fontSize: 12, color: '#666' }}>{ex.description}</div>}
-                      </div>
-                      <button onClick={() => setNewHep((p) => p.filter((x) => x.id !== ex.id))} style={{ color: '#c00', background: 'none', border: 'none', cursor: 'pointer' }}>Remove</button>
-                    </div>
-                  ))
-                )}
+                <ExercisePicker
+                  libMode={libMode}
+                  setLibMode={setLibMode}
+                  query={query}
+                  setQuery={setQuery}
+                  libraryResults={libraryResults}
+                  searchLoading={searchLoading}
+                  addExercise={() => {
+                    const name = (query || '').trim();
+                    if (!name) return;
+                    const newEx = { id: Date.now(), name, sets: newDefaultSets, reps: newDefaultReps } as any;
+                    setNewHep((p) => (p.some((x) => x.name === newEx.name) ? p : [newEx, ...p]));
+                    setQuery(''); setLibraryResults([]);
+                  }}
+                  addExerciseFromLibrary={(it: any) => { const newEx = { id: Date.now(), name: it.name, category: it.category, description: it.description, sets: newDefaultSets, reps: newDefaultReps } as any; setNewHep((p) => (p.some((x) => x.name === newEx.name) ? p : [newEx, ...p])); setQuery(''); setLibraryResults([]); }}
+                  displayedExercises={newHep}
+                  defaultSets={newDefaultSets}
+                  defaultReps={newDefaultReps}
+                  setDefaultSets={setNewDefaultSets}
+                  setDefaultReps={setNewDefaultReps}
+                  updateSets={(id: number, v: number) => setNewHep((p) => p.map((x) => x.id === id ? ({ ...x, sets: v }) : x))}
+                  updateReps={(id: number, v: number) => setNewHep((p) => p.map((x) => x.id === id ? ({ ...x, reps: v }) : x))}
+                  removeExercise={(id: number) => setNewHep((p) => p.filter((x) => x.id !== id))}
+                  frequency={newFrequency}
+                  setFrequency={setNewFrequency}
+                  caseTitle={newTitle}
+                  setCaseTitle={setNewTitle}
+                  caseBodyParts={newBodyParts}
+                  setCaseBodyParts={setNewBodyParts}
+                />
               </div>
 
               <div style={{ marginTop: 10, display: 'flex', gap: 8 }}>
                 <button onClick={async () => {
-                  // basic validation
-                  if (!newTitle.trim()) return alert('Please provide a program title');
+                  // allow empty title and default to 'HEP Program'
+                  const title = newTitle.trim() || 'HEP Program';
                   const bodyParts = newBodyParts.split(',').map((s) => s.trim()).filter(Boolean);
-                  const payload = { title: newTitle.trim(), bodyParts, notes: newNotes || '', hep: newHep };
+                  const payload = { title, bodyParts, notes: newNotes || '', frequency: newFrequency || undefined, hep: newHep };
                   try {
                     const res = await fetch(`${BACKEND}/patients/${encodeURIComponent(patient.id)}/cases`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
                     if (!res.ok) throw new Error('Failed to create case');
