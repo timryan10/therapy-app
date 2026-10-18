@@ -5,13 +5,11 @@ import Image from "next/image";
 import logo from "./raleigh-ortho-logo.png";
 import { useRouter } from "next/navigation";
 
-// TODO: replace with real authentication against the backend once available
+// backend
+const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:4000";
+// TODO: keep therapist demo auth until therapist backend exists
 const VALID_USERNAME = "therapist";
 const VALID_PASSWORD = "password123";
-
-// Demo patient credentials
-const VALID_PATIENT_USERNAME = "patient";
-const VALID_PATIENT_PASSWORD = "patient123";
 
 export default function Home() {
   const [role, setRole] = useState<"therapist" | "patient">("therapist");
@@ -20,7 +18,7 @@ export default function Home() {
   const [error, setError] = useState("");
   const router = useRouter();
 
-  function handleSignIn(e: FormEvent) {
+  async function handleSignIn(e: FormEvent) {
     e.preventDefault();
 
     const u = username.trim();
@@ -32,15 +30,30 @@ export default function Home() {
         router.push('/therapist-dashboard');
         return;
       }
-    } else {
-      if (u === VALID_PATIENT_USERNAME && p === VALID_PATIENT_PASSWORD) {
-        setError("");
-        router.push('/patient-dashboard');
-        return;
-      }
+      setError("Invalid username or password.");
+      return;
     }
 
-    setError("Invalid username or password.");
+    // patient auth: call backend
+    try {
+      const res = await fetch(`${BACKEND}/auth/patient-login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: u, password: p })
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setError(body?.error || 'Invalid username or password.');
+        return;
+      }
+      const data = await res.json();
+      const id = data?.patient?.id;
+      if (!id) { setError('Invalid login response'); return; }
+      setError("");
+      router.push(`/patient-portal/${id}`);
+    } catch (err: any) {
+      setError(String(err?.message || 'Network error'));
+    }
   }
 
   return (

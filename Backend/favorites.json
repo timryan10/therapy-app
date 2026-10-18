@@ -1,12 +1,3 @@
 {
-  "therapist1": [
-    {
-      "id": 2,
-      "name": "Hamstring Stretch",
-      "category": "Lower Extremity",
-      "difficulty": "Easy",
-      "description": "Standing hamstring stretch for flexibility.",
-      "duration": "30s hold"
-    }
-  ]
+  "therapist1": []
 }

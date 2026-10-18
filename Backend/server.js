@@ -7,6 +7,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+const bcrypt = require('bcryptjs');
 const DATA_PATH = path.join(__dirname, 'exercises.json');
 const PATIENTS_PATH = path.join(__dirname, 'patients.json');
 const FAVORITES_PATH = path.join(__dirname, 'favorites.json');
@@ -135,9 +136,54 @@ app.get('/patients', (req, res) => {
     if (err) return res.status(500).json({ error: 'Failed to read patients' });
     try {
       const items = JSON.parse(data);
-      res.json(items);
+      // don't expose password hashes
+      const safe = items.map((p) => {
+        const copy = Object.assign({}, p);
+        if (copy.passwordHash) delete copy.passwordHash;
+        return copy;
+      });
+      res.json(safe);
     } catch (e) {
       res.status(500).json({ error: 'Invalid patients data' });
+    }
+  });
+});
+
+// patient login
+app.post('/auth/patient-login', (req, res) => {
+  const { username, password } = req.body || {};
+  if (!username || !password) return res.status(400).json({ error: 'username and password required' });
+
+  fs.readFile(PATIENTS_PATH, 'utf8', (err, data) => {
+    if (err) return res.status(500).json({ error: 'Failed to read patients' });
+    let items = [];
+    try {
+      items = JSON.parse(data);
+    } catch (e) {
+      return res.status(500).json({ error: 'Invalid patients data' });
+    }
+
+    const patient = items.find((p) => (p.username && p.username === username) || (p.contact && p.contact === username));
+    if (!patient) return res.status(401).json({ error: 'Invalid credentials' });
+
+    const supplied = String(password);
+    // if we have a stored hash, verify; otherwise accept default password (firstName+lastName)
+    if (patient.passwordHash) {
+      bcrypt.compare(supplied, patient.passwordHash, (bErr, ok) => {
+        if (bErr || !ok) return res.status(401).json({ error: 'Invalid credentials' });
+        const safe = Object.assign({}, patient);
+        if (safe.passwordHash) delete safe.passwordHash;
+        res.json({ ok: true, patient: safe });
+      });
+    } else {
+      const defaultPassword = String(patient.firstName || '') + String(patient.lastName || '');
+      if (supplied === defaultPassword) {
+        const safe = Object.assign({}, patient);
+        if (safe.passwordHash) delete safe.passwordHash;
+        res.json({ ok: true, patient: safe });
+      } else {
+        res.status(401).json({ error: 'Invalid credentials' });
+      }
     }
   });
 });
@@ -164,7 +210,9 @@ app.get('/patients/:id', (req, res) => {
       const items = JSON.parse(data);
       const patient = items.find((p) => p.id === id);
       if (!patient) return res.status(404).json({ error: 'Patient not found' });
-      res.json(patient);
+      const safe = Object.assign({}, patient);
+      if (safe.passwordHash) delete safe.passwordHash;
+      res.json(safe);
     } catch (e) {
       res.status(500).json({ error: 'Invalid patients data' });
     }
@@ -187,11 +235,17 @@ app.post('/patients', (req, res) => {
     }
 
     const newId = `p${Date.now()}`;
+    const username = (contact && String(contact)) || newId;
+    const defaultPassword = String(firstName) + String(lastName);
+    const hashed = bcrypt.hashSync(defaultPassword, 8);
+
     const newPatient = {
       id: newId,
       firstName: String(firstName),
       lastName: String(lastName),
       contact: contact || '',
+      username,
+      passwordHash: hashed,
       birthdate: birthdate || '',
       hep: body.hep || [],
       cases: body.cases || [],
