@@ -1,4 +1,5 @@
-  [{
+[
+  {
     "id": "p1791835384507",
     "firstName": "Test",
     "lastName": "Patient",
@@ -35,6 +36,102 @@
             "name": "Knee Extension",
             "category": "Lower Extremity",
             "description": "Seated knee extension to strengthen quadriceps.",
+            "sets": 3,
+            "reps": 10
+          }
+        ]
+      }
+    ],
+    "lastVisit": "2026-10-18",
+    "notes": ""
+  },
+  {
+    "id": "p1792362272263",
+    "firstName": "Ilene",
+    "lastName": "Example",
+    "contact": "ilene@example.com",
+    "username": "ilene@example.com",
+    "passwordHash": "$2a$08$B0sBBc9xUXcT0/nCDf7TB.qo.FZw0XUzfFviSM/EpmtWqBFkcVpaq",
+    "birthdate": "2000-01-01",
+    "hep": [],
+    "cases": [
+      {
+        "id": "case-1792362272223",
+        "title": "HEP Program",
+        "bodyParts": [
+          "right shoulder"
+        ],
+        "notes": "",
+        "hep": [
+          {
+            "id": 1792362267626,
+            "name": "Shoulder Pendulum",
+            "category": "Upper Extremity",
+            "description": "Pendulum swings to mobilize the shoulder joint.",
+            "sets": 3,
+            "reps": 10
+          }
+        ]
+      }
+    ],
+    "lastVisit": "2026-10-18",
+    "notes": ""
+  },
+  {
+    "id": "p1792362419283",
+    "firstName": "Zeda",
+    "lastName": "Example",
+    "contact": "zeda@example.com",
+    "username": "zeda@example.com",
+    "passwordHash": "$2a$08$nuIKBmeW56dRzBUDg.s2/ut1NQdxcCe6J/MWO0JEiDp3OL7WlbcPG",
+    "birthdate": "2000-01-01",
+    "hep": [],
+    "cases": [
+      {
+        "id": "case-1792362419265",
+        "title": "HEP Program",
+        "bodyParts": [
+          "stinky"
+        ],
+        "notes": "",
+        "hep": [
+          {
+            "id": 1792362417220,
+            "name": "Calf Raises",
+            "category": "Lower Extremity",
+            "description": "Standing calf raises to strengthen the calf muscles.",
+            "sets": 3,
+            "reps": 10
+          }
+        ]
+      }
+    ],
+    "lastVisit": "2026-10-18",
+    "notes": ""
+  },
+  {
+    "id": "p1792362546549",
+    "firstName": "nicole",
+    "lastName": "example",
+    "contact": "nicole@example.com",
+    "username": "nicole@example.com",
+    "passwordHash": "$2a$08$pdpwXVdmk/CnK80adz.xhex8V9g8ZdBFly7F8Y/k1fKhFlH8q/.WW",
+    "birthdate": "2000-01-01",
+    "hep": [],
+    "cases": [
+      {
+        "id": "case-1792362546505",
+        "title": "HEP Program",
+        "bodyParts": [
+          "left knee"
+        ],
+        "notes": "",
+        "hep": [
+          {
+            "id": 1792362544909,
+            "name": "Calf Raises",
+            "category": "Lower Extremity",
+            "description": "Standing calf raises to strengthen the calf muscles.",
             "sets": 3,
             "reps": 10
           }

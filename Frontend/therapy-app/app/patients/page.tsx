@@ -12,9 +12,22 @@ export default function PatientsListPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const deb = useRef<any>(null);
+  const THERAPIST_ID = process.env.NEXT_PUBLIC_THERAPIST_ID || 'therapist-1';
+  const [myPatientIds, setMyPatientIds] = useState<string[]>([]);
 
   useEffect(() => {
     // do not preload anything on mount
+    // preload therapist's patients mapping so we can disable Add button
+    if (THERAPIST_ID) {
+      fetch(`${BACKEND}/therapists/${encodeURIComponent(THERAPIST_ID)}/patients`)
+        .then((r) => r.ok ? r.json() : [])
+        .then((json) => {
+          const ids = Array.isArray(json) ? json.map((p: any) => p.id) : [];
+          setMyPatientIds(ids);
+        })
+        .catch(() => {});
+    }
+
     return () => {
       if (deb.current) window.clearTimeout(deb.current);
     };
@@ -57,14 +70,14 @@ export default function PatientsListPage() {
     <div className="main">
       <Header />
       <div className="content">
-        <h2>Patients</h2>
+        <h1>Patient Search</h1>
 
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 12 }}>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 12, width: '100%' }}>
           <input
             aria-label="Search patients"
             value={query}
             onChange={(e) => onChange(e.target.value)}
-            placeholder="Search patients by name, contact or notes"
+            placeholder="Search patients by name or contact"
             style={{ padding: '8px 10px', flex: 1, borderRadius: 6, border: '1px solid #ccc' }}
           />
           <button
@@ -75,7 +88,7 @@ export default function PatientsListPage() {
           </button>
         </div>
 
-        <div style={{ marginTop: 16 }}>
+        <div style={{ marginTop: 16, width: '100%' }}>
           {loading && <div>Searching…</div>}
           {error && <div style={{ color: 'crimson' }}>Error: {error}</div>}
 
@@ -84,13 +97,59 @@ export default function PatientsListPage() {
           )}
 
           {results && results.length > 0 && (
-            <ul style={{ marginTop: 12, paddingLeft: 0, listStyle: 'none' }}>
+            <ul style={{ marginTop: 12, paddingLeft: 0, listStyle: 'none', width: '100%' }}>
               {results.map((p) => (
-                <li key={p.id} style={{ padding: '8px 0', borderBottom: '1px solid #f0f0f0' }}>
-                      <Link href={`/patients/${encodeURIComponent(p.id)}`} style={{ color: '#007da4', textDecoration: 'none' }}>
-                        {p.firstName} {p.lastName}
-                      </Link>
-                  <div style={{ color: '#666', fontSize: 12 }}>{p.contact}</div>
+                <li
+                  key={p.id}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '12px',
+                    borderBottom: '1px solid #f0f0f0',
+                    width: '100%',
+                    boxSizing: 'border-box',
+                    border: '1px solid #eee',
+                    borderRadius: 6,
+                    marginBottom: 8,
+                  }}
+                >
+                  <Link href={`/patients/${encodeURIComponent(p.id)}`} style={{ color: '#007da4', textDecoration: 'none', flex: 1 }}>
+                    <div style={{ fontWeight: 600 }}>{p.firstName} {p.lastName}</div>
+                    <div style={{ color: '#666', fontSize: 13 }}>{p.contact || 'No contact'}</div>
+                  </Link>
+
+                  <div style={{ width: 220, textAlign: 'right', color: '#666', fontSize: 13 }}>
+                    <div>Birthday: {p.birthdate || '—'}</div>
+                    <div>Cases: {(p.cases || []).length}</div>
+                  </div>
+
+                  <div style={{ marginLeft: 12 }}>
+                    {myPatientIds.includes(p.id) ? (
+                      <button style={{ padding: '6px 10px', borderRadius: 6, background: '#ddd', border: 'none' }} disabled>Added</button>
+                    ) : (
+                      <button
+                        onClick={() => {
+                          fetch(`${BACKEND}/therapists/${encodeURIComponent(THERAPIST_ID)}/patients`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ patientId: p.id })
+                          })
+                            .then((r) => {
+                              if (!r.ok) throw new Error('failed');
+                              return r.json();
+                            })
+                            .then((added) => {
+                              setMyPatientIds((s) => [p.id, ...s]);
+                            })
+                            .catch(() => alert('Failed to add patient'));
+                        }}
+                        style={{ padding: '6px 10px', borderRadius: 6, background: '#007da4', color: '#fff', border: 'none' }}
+                      >
+                        Add
+                      </button>
+                    )}
+                  </div>
                 </li>
               ))}
             </ul>

@@ -11,6 +11,7 @@ const bcrypt = require('bcryptjs');
 const DATA_PATH = path.join(__dirname, 'exercises.json');
 const PATIENTS_PATH = path.join(__dirname, 'patients.json');
 const FAVORITES_PATH = path.join(__dirname, 'favorites.json');
+const THERAPIST_PATIENTS_PATH = path.join(__dirname, 'therapist_patients.json');
 
 app.get('/exercises', (req, res) => {
   fs.readFile(DATA_PATH, 'utf8', (err, data) => {
@@ -257,7 +258,26 @@ app.post('/patients', (req, res) => {
 
     fs.writeFile(PATIENTS_PATH, JSON.stringify(items, null, 2), 'utf8', (werr) => {
       if (werr) return res.status(500).json({ error: 'Failed to save patient' });
-      res.status(201).json(newPatient);
+      // optionally associate with therapist if provided
+      const createdBy = body.createdBy;
+      if (createdBy) {
+        fs.readFile(THERAPIST_PATIENTS_PATH, 'utf8', (mErr, mData) => {
+          let map = {};
+          try {
+            map = mErr ? {} : JSON.parse(mData || '{}');
+          } catch (e) {
+            map = {};
+          }
+          map[createdBy] = map[createdBy] || [];
+          // prepend if not present
+          if (!map[createdBy].includes(newId)) map[createdBy].unshift(newId);
+          fs.writeFile(THERAPIST_PATIENTS_PATH, JSON.stringify(map, null, 2), 'utf8', () => {
+            res.status(201).json(newPatient);
+          });
+        });
+      } else {
+        res.status(201).json(newPatient);
+      }
     });
   });
 });
@@ -294,6 +314,91 @@ app.put('/patients/:id', (req, res) => {
     fs.writeFile(PATIENTS_PATH, JSON.stringify(items, null, 2), 'utf8', (werr) => {
       if (werr) return res.status(500).json({ error: 'Failed to update patient' });
       res.json(updated);
+    });
+  });
+});
+
+// therapist -> patients endpoints
+app.get('/therapists/:id/patients', (req, res) => {
+  const id = req.params.id;
+  fs.readFile(THERAPIST_PATIENTS_PATH, 'utf8', (err, data) => {
+    let map = {};
+    try {
+      map = err ? {} : JSON.parse(data || '{}');
+    } catch (e) {
+      map = {};
+    }
+    const ids = Array.isArray(map[id]) ? map[id] : [];
+    fs.readFile(PATIENTS_PATH, 'utf8', (perr, pdata) => {
+      if (perr) return res.status(500).json({ error: 'Failed to read patients' });
+      let items = [];
+      try {
+        items = JSON.parse(pdata || '[]');
+      } catch (e) {
+        items = [];
+      }
+      const selected = items.filter((p) => ids.includes(p.id)).map((p) => {
+        const copy = Object.assign({}, p);
+        if (copy.passwordHash) delete copy.passwordHash;
+        return copy;
+      });
+      // sort by lastName
+      selected.sort((a, b) => (String(a.lastName || '').localeCompare(String(b.lastName || ''))));
+      res.json(selected);
+    });
+  });
+});
+
+app.post('/therapists/:id/patients', (req, res) => {
+  const id = req.params.id;
+  const { patientId } = req.body || {};
+  if (!patientId) return res.status(400).json({ error: 'patientId required' });
+
+  fs.readFile(PATIENTS_PATH, 'utf8', (perr, pdata) => {
+    if (perr) return res.status(500).json({ error: 'Failed to read patients' });
+    let items = [];
+    try {
+      items = JSON.parse(pdata || '[]');
+    } catch (e) {
+      items = [];
+    }
+    const patient = items.find((p) => p.id === patientId);
+    if (!patient) return res.status(404).json({ error: 'Patient not found' });
+
+    fs.readFile(THERAPIST_PATIENTS_PATH, 'utf8', (err, data) => {
+      let map = {};
+      try {
+        map = err ? {} : JSON.parse(data || '{}');
+      } catch (e) {
+        map = {};
+      }
+      map[id] = map[id] || [];
+      if (!map[id].includes(patientId)) map[id].unshift(patientId);
+      fs.writeFile(THERAPIST_PATIENTS_PATH, JSON.stringify(map, null, 2), 'utf8', (werr) => {
+        if (werr) return res.status(500).json({ error: 'Failed to save mapping' });
+        const safe = Object.assign({}, patient);
+        if (safe.passwordHash) delete safe.passwordHash;
+        res.status(201).json(safe);
+      });
+    });
+  });
+});
+
+// remove a patient from a therapist's list
+app.delete('/therapists/:id/patients/:patientId', (req, res) => {
+  const id = req.params.id;
+  const patientId = req.params.patientId;
+  fs.readFile(THERAPIST_PATIENTS_PATH, 'utf8', (err, data) => {
+    let map = {};
+    try {
+      map = err ? {} : JSON.parse(data || '{}');
+    } catch (e) {
+      map = {};
+    }
+    map[id] = Array.isArray(map[id]) ? map[id].filter((pid) => String(pid) !== String(patientId)) : [];
+    fs.writeFile(THERAPIST_PATIENTS_PATH, JSON.stringify(map, null, 2), 'utf8', (werr) => {
+      if (werr) return res.status(500).json({ error: 'Failed to update mapping' });
+      res.json({ ok: true });
     });
   });
 });

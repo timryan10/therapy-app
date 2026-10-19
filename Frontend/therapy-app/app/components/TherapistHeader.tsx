@@ -12,7 +12,8 @@ export default function Header() {
         <ul>
           <li><Link href="/therapist-library">My Library</Link></li>
           <li><Link href="/exercises">Exercises</Link></li>
-          <li><Link href="/patients">Patients</Link></li>
+          <li><Link href="/therapist-dashboard/my-patients">My Patients</Link></li>
+          <li><Link href="/patients">Patient Search</Link></li>
         </ul>
       </nav>
     </div>

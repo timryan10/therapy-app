@@ -21,6 +21,7 @@ type CaseItem = {
 };
 
 const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:4000";
+const THERAPIST_ID = process.env.NEXT_PUBLIC_THERAPIST_ID || 'therapist-1';
 
 export default function CreatePatient() {
   const [firstName, setFirstName] = useState("");
@@ -240,7 +241,7 @@ export default function CreatePatient() {
                       const newCase = { id: `case-${Date.now()}`, title: caseTitle.trim() || 'HEP Program', bodyParts, notes: caseNotes || '', frequency: caseFrequency || undefined, hep: pendingCaseHep };
                     finalCases.unshift(newCase);
                     // keep top-level exercises separate
-                    const payload: any = { firstName, lastName, contact, birthdate, hep: exercises, cases: finalCases };
+                    const payload: any = { firstName, lastName, contact, birthdate, hep: exercises, cases: finalCases, createdBy: THERAPIST_ID };
                     const res = await fetch(`${BACKEND}/patients`, {
                       method: 'POST',
                       headers: { 'Content-Type': 'application/json' },
@@ -259,7 +260,7 @@ export default function CreatePatient() {
                     const bodyParts = caseBodyParts.split(',').map((s) => s.trim()).filter(Boolean);
                     const newCase = { id: `case-${Date.now()}`, title: 'HEP Program', bodyParts, notes: caseNotes || '', frequency: caseFrequency || undefined, hep: exercises };
                     finalCases.unshift(newCase);
-                    const payload: any = { firstName, lastName, contact, birthdate, hep: [], cases: finalCases };
+                    const payload: any = { firstName, lastName, contact, birthdate, hep: [], cases: finalCases, createdBy: THERAPIST_ID };
                     const res = await fetch(`${BACKEND}/patients`, {
                       method: 'POST',
                       headers: { 'Content-Type': 'application/json' },
@@ -272,7 +273,7 @@ export default function CreatePatient() {
                   }
 
                   // Default: no cases and no exercises to attach
-                  const payload: any = { firstName, lastName, contact, birthdate, hep: exercises, cases: finalCases };
+                  const payload: any = { firstName, lastName, contact, birthdate, hep: exercises, cases: finalCases, createdBy: THERAPIST_ID };
                   // always create a new patient from this page
                   const res = await fetch(`${BACKEND}/patients`, {
                     method: 'POST',

@@ -47,21 +47,13 @@ export default function Page() {
       <Header />
       <div className="content">
         <div className="actions">
-          <Link href="/create-patient">
-            <button className="action-button new-hep">
-              <h2>Create Patient</h2>
-            </button>
-          </Link>
-
-          <Link href="/patients">
-            <button className="action-button existing-patients">
-              <h2>Existing Patients</h2>
-            </button>
+          <Link href="/create-patient" className="action-button new-hep">
+            <h2>+ Create Patient</h2>
           </Link>
         </div>
 
         <div className="recent-hep">
-          <h2>Recent Patients</h2>
+          <h2>Recent Programs</h2>
           {loading && <div>Loading patients...</div>}
           {!loading && patients && patients.length === 0 && (
             <div>No recent patients found.</div>
