@@ -1,11 +1,15 @@
+
 const express = require('express');
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
+const multer = require('multer');
+
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+const upload = multer({ dest: path.join(__dirname, 'uploads/') });
 
 const bcrypt = require('bcryptjs');
 const DATA_PATH = path.join(__dirname, 'exercises.json');
@@ -37,8 +41,8 @@ app.get('/exercises/search', (req, res) => {
 });
 
 // create a new exercise (append to exercises.json)
-app.post('/exercises', (req, res) => {
-  const { name, category, description } = req.body || {};
+app.post('/exercises', upload.single('media'), (req, res) => {
+  const { name, description } = req.body || {};
   if (!name || typeof name !== 'string') return res.status(400).json({ error: 'Invalid name' });
 
   fs.readFile(DATA_PATH, 'utf8', (err, data) => {
@@ -50,11 +54,20 @@ app.post('/exercises', (req, res) => {
       return res.status(500).json({ error: 'Invalid exercises data' });
     }
 
+    let mediaUrl = '';
+    let mediaType = '';
+    if (req.file) {
+      // Save relative path for frontend
+      mediaUrl = `/uploads/${req.file.filename}`;
+      mediaType = req.file.mimetype || '';
+    }
+
     const newItem = {
       id: Date.now(),
       name: name.trim(),
-      category: category || '',
-      description: description || ''
+      description: description || '',
+      mediaUrl,
+      mediaType
     };
     items.push(newItem);
 
@@ -64,6 +77,8 @@ app.post('/exercises', (req, res) => {
     });
   });
 });
+// Serve uploaded files
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Favorites: per-therapist personal library
 app.get('/therapists/:id/favorites', (req, res) => {

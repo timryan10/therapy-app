@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, FormEvent } from "react";
+import { useEffect, useState } from "react";
 import Header from "../components/TherapistHeader";
 
 const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:4000";
@@ -8,18 +8,14 @@ const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:4000";
 type Exercise = {
   id: number;
   name: string;
-  category?: string;
   description?: string;
+  mediaUrl?: string;
+  mediaType?: string;
 };
 
 export default function ExercisesPage() {
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [loading, setLoading] = useState(true);
-  const [name, setName] = useState("");
-  const [category, setCategory] = useState("");
-  const [description, setDescription] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState<string>('');
 
   function load() {
@@ -58,40 +54,26 @@ export default function ExercisesPage() {
   const [favLoading, setFavLoading] = useState<Record<number, boolean>>({});
   const [favError, setFavError] = useState<string | null>(null);
 
-  function submit(e?: FormEvent) {
-    e?.preventDefault?.();
-    setError(null);
-    const trimmed = name.trim();
-    if (!trimmed) return setError('Name is required');
-    setSaving(true);
-    fetch(`${BACKEND}/exercises`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: trimmed, category: category.trim(), description: description.trim() })
-    })
-      .then((r) => {
-        if (!r.ok) throw new Error('Failed to create');
-        return r.json();
-      })
-      .then((created) => {
-        setExercises((prev) => [created, ...prev]);
-        setName(''); setCategory(''); setDescription('');
-      })
-      .catch((err) => setError(String(err.message || err)))
-      .finally(() => setSaving(false));
-  }
-
   const q = (search || '').trim().toLowerCase();
   const filtered = q
-    ? exercises.filter((ex) => (ex.name || '').toLowerCase().includes(q) || (ex.category || '').toLowerCase().includes(q) || (ex.description || '').toLowerCase().includes(q))
+    ? exercises.filter((ex) => (ex.name || '').toLowerCase().includes(q) || (ex.description || '').toLowerCase().includes(q))
     : exercises;
 
-  const groupsFiltered: Record<string, Exercise[]> = filtered.reduce((acc, cur) => {
-    const key = cur.category && cur.category.trim() ? cur.category : 'Uncategorized';
-    if (!acc[key]) acc[key] = [];
-    acc[key].push(cur);
-    return acc;
-  }, {} as Record<string, Exercise[]>);
+  const mediaSrcFor = (mediaUrl?: string) => {
+    if (!mediaUrl) return '';
+    if (mediaUrl.startsWith('/uploads/')) return `${BACKEND}${mediaUrl}`;
+    return mediaUrl;
+  };
+
+  const isVideoMedia = (ex: Exercise) => {
+    const url = ex.mediaUrl || '';
+    const byType = (ex.mediaType || '').toLowerCase().startsWith('video/');
+    const byExt = /\.(mp4|webm|ogg|mov|m4v)$/i.test(url);
+    const hasKnownImageExt = /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(url);
+    // fallback for older uploads that had no extension and no mediaType
+    const unknownNoExt = !!url && !byExt && !hasKnownImageExt && !ex.mediaType;
+    return byType || byExt || unknownNoExt;
+  };
 
   return (
     <div className="main">
@@ -109,8 +91,6 @@ export default function ExercisesPage() {
           />
           <a href="/exercises/new" style={{ padding: '8px 12px', borderRadius: 6, background: '#007da4', color: '#fff', textDecoration: 'none' }}>New Exercise</a>
         </div>
-        {error && <div style={{ color: 'red', marginBottom: 12 }}>{error}</div>}
-
         {loading ? (
           <div>Loading library...</div>
         ) : (
@@ -118,60 +98,66 @@ export default function ExercisesPage() {
             {filtered.length === 0 ? (
               <div style={{ color: '#666' }}>No exercises in the library.</div>
             ) : (
-              Object.keys(groupsFiltered)
-                .sort()
-                .map((cat) => (
-                  <section key={cat} style={{ marginBottom: 12 }}>
-                    <h4 style={{ margin: '8px 0' }}>{cat}</h4>
+              filtered.map((ex) => (
+                <div key={ex.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid #f5f5f5' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                    {ex.mediaUrl && (
+                      isVideoMedia(ex)
+                        ? (
+                          <video
+                            src={mediaSrcFor(ex.mediaUrl)}
+                            style={{ width: 220, height: 124, borderRadius: 6, background: '#000', objectFit: 'cover' }}
+                            controls
+                            preload="metadata"
+                            playsInline
+                          />
+                        )
+                        : <img src={mediaSrcFor(ex.mediaUrl)} alt="media" style={{ width: 220, height: 124, borderRadius: 6, objectFit: 'cover' }} />
+                    )}
                     <div>
-                      {groupsFiltered[cat].map((ex) => (
-                        <div key={ex.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #f5f5f5' }}>
-                          <div>
-                            <div style={{ fontWeight: 600 }}>{ex.name}</div>
-                            {ex.description && <div style={{ fontSize: 12, color: '#666' }}>{ex.description}</div>}
-                          </div>
-                          <div style={{ display: 'flex', gap: 8 }}>
-                            <button
-                              disabled={!!favLoading[ex.id] || !!favoriteIds[ex.id]}
-                              onClick={() => {
-                                if (favoriteIds[ex.id]) return;
-                                setFavError(null);
-                                setFavLoading((s) => ({ ...s, [ex.id]: true }));
-                                fetch(`${BACKEND}/therapists/therapist1/favorites`, {
-                                  method: 'POST',
-                                  headers: { 'Content-Type': 'application/json' },
-                                  body: JSON.stringify(ex)
-                                })
-                                  .then((r) => {
-                                    if (r.status === 409) {
-                                      // already saved; mark locally
-                                      setFavoriteIds((s) => ({ ...s, [ex.id]: true }));
-                                      return null;
-                                    }
-                                    if (!r.ok) throw new Error('Failed to save favorite');
-                                    return r.json();
-                                  })
-                                  .then(() => {
-                                    // mark saved locally
-                                    setFavoriteIds((s) => ({ ...s, [ex.id]: true }));
-                                  })
-                                  .catch((err) => {
-                                    setFavError(String(err.message || err));
-                                  })
-                                  .finally(() => {
-                                    setFavLoading((s) => ({ ...s, [ex.id]: false }));
-                                  });
-                              }}
-                              style={{ padding: '6px 10px', borderRadius: 6, border: 'none', background: favoriteIds[ex.id] ? '#6c757d' : '#007da4', color: 'white', cursor: favoriteIds[ex.id] ? 'default' : 'pointer', minWidth: 140, display: 'inline-flex', justifyContent: 'center', alignItems: 'center' }}
-                            >
-                              {favoriteIds[ex.id] ? 'Saved' : (favLoading[ex.id] ? 'Saving...' : 'Save to My Library')}
-                            </button>
-                          </div>
-                        </div>
-                      ))}
+                      <div style={{ fontWeight: 600 }}>{ex.name}</div>
+                      {ex.description && <div style={{ fontSize: 12, color: '#666' }}>{ex.description}</div>}
                     </div>
-                  </section>
-                ))
+                  </div>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button
+                      disabled={!!favLoading[ex.id] || !!favoriteIds[ex.id]}
+                      onClick={() => {
+                        if (favoriteIds[ex.id]) return;
+                        setFavError(null);
+                        setFavLoading((s) => ({ ...s, [ex.id]: true }));
+                        fetch(`${BACKEND}/therapists/therapist1/favorites`, {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify(ex)
+                        })
+                          .then((r) => {
+                            if (r.status === 409) {
+                              // already saved; mark locally
+                              setFavoriteIds((s) => ({ ...s, [ex.id]: true }));
+                              return null;
+                            }
+                            if (!r.ok) throw new Error('Failed to save favorite');
+                            return r.json();
+                          })
+                          .then(() => {
+                            // mark saved locally
+                            setFavoriteIds((s) => ({ ...s, [ex.id]: true }));
+                          })
+                          .catch((err) => {
+                            setFavError(String(err.message || err));
+                          })
+                          .finally(() => {
+                            setFavLoading((s) => ({ ...s, [ex.id]: false }));
+                          });
+                      }}
+                      style={{ padding: '6px 10px', borderRadius: 6, border: 'none', background: favoriteIds[ex.id] ? '#6c757d' : '#007da4', color: 'white', cursor: favoriteIds[ex.id] ? 'default' : 'pointer', minWidth: 140, display: 'inline-flex', justifyContent: 'center', alignItems: 'center' }}
+                    >
+                      {favoriteIds[ex.id] ? 'Saved' : (favLoading[ex.id] ? 'Saving...' : 'Save to My Library')}
+                    </button>
+                  </div>
+                </div>
+              ))
             )}
           </div>
         )}
