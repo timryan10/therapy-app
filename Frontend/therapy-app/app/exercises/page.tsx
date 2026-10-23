@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import Header from "../components/TherapistHeader";
 
 const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:4000";
@@ -84,7 +85,7 @@ export default function ExercisesPage() {
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 12, width: '100%', maxWidth: 900 }}>
           <input
             aria-label="Search exercises"
-            placeholder="Search exercises by name, category or description"
+            placeholder="Search exercises by name or description"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             style={{ padding: '8px 10px', flex: 1, borderRadius: 6, border: '1px solid #ccc' }}
@@ -103,20 +104,13 @@ export default function ExercisesPage() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                     {ex.mediaUrl && (
                       isVideoMedia(ex)
-                        ? (
-                          <video
-                            src={mediaSrcFor(ex.mediaUrl)}
-                            style={{ width: 220, height: 124, borderRadius: 6, background: '#000', objectFit: 'cover' }}
-                            controls
-                            preload="metadata"
-                            playsInline
-                          />
-                        )
-                        : <img src={mediaSrcFor(ex.mediaUrl)} alt="media" style={{ width: 220, height: 124, borderRadius: 6, objectFit: 'cover' }} />
+                        ? <video src={mediaSrcFor(ex.mediaUrl)} muted playsInline preload="metadata" style={{ width: 140, height: 80, borderRadius: 6, background: '#000', objectFit: 'cover', pointerEvents: 'none' }} />
+                        : <img src={mediaSrcFor(ex.mediaUrl)} alt="media" style={{ width: 140, height: 80, borderRadius: 6, objectFit: 'cover' }} />
                     )}
                     <div>
-                      <div style={{ fontWeight: 600 }}>{ex.name}</div>
-                      {ex.description && <div style={{ fontSize: 12, color: '#666' }}>{ex.description}</div>}
+                      <Link href={`/exercises/${encodeURIComponent(String(ex.id))}`} style={{ fontWeight: 600, color: '#007da4', textDecoration: 'none' }}>
+                        {ex.name}
+                      </Link>
                     </div>
                   </div>
                   <div style={{ display: 'flex', gap: 8 }}>
