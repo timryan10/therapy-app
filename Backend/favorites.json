@@ -1,44 +1,36 @@
 {
   "therapist1": [
     {
-      "id": 4,
-      "name": "Wall Push-up",
-      "category": "Upper Extremity",
-      "difficulty": "Medium",
-      "description": "Inclined push-ups against a wall for shoulder and chest strength.",
-      "duration": "3 sets of 8"
+      "id": 1793052820195,
+      "name": "Side-Lying Clamshell",
+      "description": "To perform the exercise, lie on your side with your knees bent and feet together. Keeping your feet touching, slowly lift your top knee while keeping your pelvis stable and avoiding rotation of your trunk. Lower your knee back to the starting position with control and repeat.",
+      "mediaUrl": "/uploads/85a241cf11be238ca37bca9c590ad4d7",
+      "mediaType": "video/quicktime",
+      "thumbnailUrl": "/uploads/thumbs/85a241cf11be238ca37bca9c590ad4d7.jpg"
     },
     {
-      "id": 3,
-      "name": "Shoulder Pendulum",
-      "category": "Upper Extremity",
-      "difficulty": "Easy",
-      "description": "Pendulum swings to mobilize the shoulder joint.",
-      "duration": "2 minutes"
+      "id": 1793052779133,
+      "name": "Side-Lying Hip Abduction",
+      "description": "To perform the exercise, lie on your side with your legs straight and stacked on top of each other. Keeping your top leg straight and your toes pointed forward, slowly lift your top leg toward the ceiling without rotating your hips or trunk. Pause briefly, then lower your leg back to the starting position with control.",
+      "mediaUrl": "/uploads/d6b6e4cfbeb281fbcb0d54e3e02134b7",
+      "mediaType": "video/quicktime",
+      "thumbnailUrl": "/uploads/thumbs/d6b6e4cfbeb281fbcb0d54e3e02134b7.jpg"
     },
     {
-      "id": 5,
-      "name": "Calf Raises",
-      "category": "Lower Extremity",
-      "difficulty": "Easy",
-      "description": "Standing calf raises to strengthen the calf muscles.",
-      "duration": "3 sets of 12"
+      "id": 1793052742915,
+      "name": "Straight Leg Raise(SLR)",
+      "description": "To perform the exercise, lie on your back with one knee bent and the other leg straight. Engage your quadriceps to keep the straight leg extended, then slowly lift it to approximately the height of the opposite knee. Hold briefly, then lower the leg back to the starting position with control.",
+      "mediaUrl": "/uploads/0ea910e14132cb7af5585f66076693d2",
+      "mediaType": "video/quicktime",
+      "thumbnailUrl": "/uploads/thumbs/0ea910e14132cb7af5585f66076693d2.jpg"
     },
     {
-      "id": 2,
-      "name": "Hamstring Stretch",
-      "category": "Lower Extremity",
-      "difficulty": "Easy",
-      "description": "Standing hamstring stretch for flexibility.",
-      "duration": "30s hold"
-    },
-    {
-      "id": 1,
-      "name": "Knee Extension",
-      "category": "Lower Extremity",
-      "difficulty": "Easy",
-      "description": "Seated knee extension to strengthen quadriceps.",
-      "duration": "3 sets of 10"
+      "id": 1793052671441,
+      "name": "Bridge",
+      "description": "To perform the exercise, lie on your back with your knees bent and feet flat on the floor, hip-width apart. Engage your core and squeeze your glutes as you lift your hips toward the ceiling until your shoulders, hips, and knees form a straight line. Hold briefly, then slowly lower your hips back to the starting position with control.",
+      "mediaUrl": "/uploads/c52eec74c6b0a6bbca031b57678cee60",
+      "mediaType": "video/quicktime",
+      "thumbnailUrl": "/uploads/thumbs/c52eec74c6b0a6bbca031b57678cee60.jpg"
     }
   ]
 }

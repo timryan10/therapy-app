@@ -57,7 +57,7 @@ export default function Home() {
   }
 
   return (
-    <div className="main">
+    <div className="main auth-main">
       <Image src={logo} alt="Raleigh Ortho Logo" />
       <form className="signIn" onSubmit={handleSignIn}>
         <div className="role-select">

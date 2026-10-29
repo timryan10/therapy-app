@@ -2,11 +2,16 @@
 
 import React from "react";
 
+const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:4000";
+
 type Exercise = {
   id: number;
   name: string;
   category?: string;
   description?: string;
+  mediaUrl?: string;
+  mediaType?: string;
+  thumbnailUrl?: string;
   sets?: number;
   reps?: number;
 };
@@ -64,6 +69,22 @@ export default function ExercisePicker(props: {
     setFrequency,
   } = props;
 
+  const mediaSrcFor = (mediaUrl?: string) => {
+    if (!mediaUrl) return "";
+    if (mediaUrl.startsWith("/uploads/")) return `${BACKEND}${mediaUrl}`;
+    return mediaUrl;
+  };
+
+  const thumbnailSrcFor = (it: Exercise) => mediaSrcFor(it.thumbnailUrl);
+
+  const isVideoMedia = (it: Exercise) => {
+    const byType = (it.mediaType || "").toLowerCase().startsWith("video/");
+    const byExt = /\.(mp4|webm|ogg|mov|m4v)$/i.test(it.mediaUrl || "");
+    const hasKnownImageExt = /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(it.mediaUrl || "");
+    const unknownNoExt = !!it.mediaUrl && !byExt && !hasKnownImageExt && !it.mediaType;
+    return byType || byExt || unknownNoExt;
+  };
+
   return (
     <>
       {setCaseTitle && setCaseBodyParts && (
@@ -100,9 +121,15 @@ export default function ExercisePicker(props: {
           <div style={{ border: '1px solid #eee', padding: 8, borderRadius: 8 }}>
             {libraryResults.map((it) => (
               <div key={it.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #f5f5f5' }}>
-                <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  {it.mediaUrl && (
+                    isVideoMedia(it)
+                      ? (thumbnailSrcFor(it)
+                        ? <img src={thumbnailSrcFor(it)} alt={`${it.name} thumbnail`} loading="lazy" style={{ width: 72, height: 44, borderRadius: 6, objectFit: 'cover', background: '#000' }} />
+                        : <div style={{ width: 72, height: 44, borderRadius: 6, background: '#1f1f1f', color: '#fff', fontSize: 11, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Video</div>)
+                      : <img src={mediaSrcFor(it.mediaUrl)} alt={it.name} loading="lazy" style={{ width: 72, height: 44, borderRadius: 6, objectFit: 'cover' }} />
+                  )}
                   <div style={{ fontWeight: 600 }}>{it.name}</div>
-                  {it.category && <div style={{ fontSize: 12, color: '#666' }}>{it.category}</div>} 
                 </div>
                 <div>
                   <button onClick={() => addExerciseFromLibrary(it)} style={{ padding: '6px 10px', borderRadius: 6, border: 'none', background: '#007da4', color: 'white', cursor: 'pointer' }}>Add</button>
@@ -124,11 +151,17 @@ export default function ExercisePicker(props: {
                 const currentReps = (ex as any).reps ?? defaultReps ?? 10;
 
                 return (
-                  <div key={ex.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid #f0f0f0' }}>
-                    <div>
-                      <div style={{ fontWeight: 600 }}>{ex.name}</div>
-                      {ex.description && <div style={{ fontSize: 12, color: '#666' }}>{ex.description}</div>}
-                      <div style={{ display: 'flex', gap: 12, marginTop: 6, alignItems: 'center' }}>
+                  <div key={ex.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, padding: '6px 0', borderBottom: '1px solid #f0f0f0' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'nowrap' }}>
+                      {ex.mediaUrl && (
+                        isVideoMedia(ex)
+                          ? (thumbnailSrcFor(ex)
+                            ? <img src={thumbnailSrcFor(ex)} alt={`${ex.name} thumbnail`} loading="lazy" style={{ width: 72, height: 44, borderRadius: 6, objectFit: 'cover', background: '#000' }} />
+                            : <div style={{ width: 72, height: 44, borderRadius: 6, background: '#1f1f1f', color: '#fff', fontSize: 11, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Video</div>)
+                          : <img src={mediaSrcFor(ex.mediaUrl)} alt={ex.name} loading="lazy" style={{ width: 72, height: 44, borderRadius: 6, objectFit: 'cover' }} />
+                      )}
+                      <div style={{ fontWeight: 600, minWidth: 170 }}>{ex.name}</div>
+                      <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
                         <div style={{ color: '#666', fontSize: 13 }}>{isPending ? 'Will be added to new case' : ''}</div>
                         <label style={{ display: 'flex', gap: 6, alignItems: 'center' }}>Sets<input type="number" min={1} value={currentSets} onChange={(e) => props.updateSets(ex.id, Number(e.target.value || 1))} style={{ width: 80, padding: '6px 8px', border: '1px solid #ccc', borderRadius: 6 }} /></label>
                         <label style={{ display: 'flex', gap: 6, alignItems: 'center' }}>Reps<input type="number" min={1} value={currentReps} onChange={(e) => props.updateReps(ex.id, Number(e.target.value || 1))} style={{ width: 80, padding: '6px 8px', border: '1px solid #ccc', borderRadius: 6 }} /></label>

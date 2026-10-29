@@ -37,6 +37,11 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+.auth-main {
+  min-height: 100vh;
+  justify-content: center;
+}
+
 .signIn {
   display: flex;
   flex-direction: column;

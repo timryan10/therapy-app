@@ -19,6 +19,12 @@ type Patient = {
     title: string;
     bodyParts: string[];
     notes?: string;
+    frequency?: string;
+    completedToday?: number;
+    timesCompletedToday?: number;
+    dailyCompletedCount?: number;
+    completionHistory?: { date?: string }[];
+    hep?: any[];
   }[];
 };
 
@@ -27,6 +33,9 @@ type Exercise = {
   name: string;
   category?: string;
   description?: string;
+  mediaUrl?: string;
+  mediaType?: string;
+  thumbnailUrl?: string;
 };
 
 const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:4000";
@@ -85,6 +94,51 @@ export default function PatientClient({ patient, exercises }: { patient: Patient
     return () => { if (searchDeb.current) window.clearTimeout(searchDeb.current); };
   }, [query, libMode]);
 
+  const getLast7Days = () => {
+    const days: { key: string; label: string; dayNumber: number }[] = [];
+    const now = new Date();
+    for (let i = 6; i >= 0; i -= 1) {
+      const d = new Date(now);
+      d.setDate(now.getDate() - i);
+      days.push({
+        key: d.toISOString().slice(0, 10),
+        label: d.toLocaleDateString('en-US', { weekday: 'short' }),
+        dayNumber: d.getDate(),
+      });
+    }
+    return days;
+  };
+
+  const getPrescribedTimesPerDay = (c: any) => {
+    const raw = (c?.frequency || '').toString().trim().toLowerCase();
+    if (!raw) return null;
+    if (raw.includes('week') || raw.includes('wk') || raw.includes('month')) return null;
+
+    const match = raw.match(/(\d+)/);
+    if (!match) return null;
+
+    const count = Number(match[1]);
+    if (!Number.isFinite(count) || count <= 0) return null;
+    return count;
+  };
+
+  const getCompletionsForDate = (c: any, dateKey: string) => {
+    if (Array.isArray(c?.completionHistory)) {
+      return c.completionHistory.filter((entry: any) => {
+        const date = (entry?.date || '').toString().slice(0, 10);
+        return date === dateKey;
+      }).length;
+    }
+
+    const today = new Date().toISOString().slice(0, 10);
+    if (dateKey !== today) return 0;
+
+    const direct = Number(c?.completedToday ?? c?.timesCompletedToday ?? c?.dailyCompletedCount ?? 0);
+    return Number.isFinite(direct) && direct > 0 ? direct : 0;
+  };
+
+  const weekDays = getLast7Days();
+
   return (
     <div>
       <button onClick={() => router.back()} style={{ marginBottom: 12 }}>← Back</button>
@@ -120,6 +174,38 @@ export default function PatientClient({ patient, exercises }: { patient: Patient
                       <div style={{ color: '#666', fontSize: 13 }}>{c.bodyParts.join(', ')}</div>
                     )}
                   </div>
+                  <div style={{ marginTop: 8, display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    {weekDays.map((day) => {
+                      const prescribedTimesPerDay = getPrescribedTimesPerDay(c);
+                      const count = getCompletionsForDate(c, day.key);
+                      const isComplete = prescribedTimesPerDay ? count >= prescribedTimesPerDay : count > 0;
+                      const isInProgress = prescribedTimesPerDay ? count > 0 && count < prescribedTimesPerDay : false;
+                      const symbol = isComplete ? '✓' : isInProgress ? '!' : '✕';
+                      const bg = isComplete ? '#dcfce7' : isInProgress ? '#fef3c7' : '#fee2e2';
+                      const fg = isComplete ? '#166534' : isInProgress ? '#92400e' : '#991b1b';
+
+                      return (
+                        <div
+                          key={day.key}
+                          title={`${day.label}: ${count}${prescribedTimesPerDay ? ` / ${prescribedTimesPerDay}` : ''}`}
+                          style={{
+                            minWidth: 52,
+                            border: '1px solid #e2e8f0',
+                            borderRadius: 6,
+                            padding: '4px 6px',
+                            textAlign: 'center',
+                            background: bg,
+                            color: fg,
+                            fontSize: 12,
+                            fontWeight: 700,
+                          }}
+                        >
+                          <div style={{ fontSize: 11 }}>{day.label} {day.dayNumber}</div>
+                          <div>{symbol}</div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
                 <div>
                   <button onClick={() => router.push(`/patients/${patient.id}/cases/${c.id}`)} style={{ background: '#007da4', color: 'white', border: 'none', padding: '6px 10px', borderRadius: 6 }}>View Exercises</button>
@@ -153,7 +239,7 @@ export default function PatientClient({ patient, exercises }: { patient: Patient
                     setNewHep((p) => (p.some((x) => x.name === newEx.name) ? p : [newEx, ...p]));
                     setQuery(''); setLibraryResults([]);
                   }}
-                  addExerciseFromLibrary={(it: any) => { const newEx = { id: Date.now(), name: it.name, category: it.category, description: it.description, sets: newDefaultSets, reps: newDefaultReps } as any; setNewHep((p) => (p.some((x) => x.name === newEx.name) ? p : [newEx, ...p])); setQuery(''); setLibraryResults([]); }}
+                  addExerciseFromLibrary={(it: any) => { const newEx = { id: Date.now(), name: it.name, category: it.category, description: it.description, mediaUrl: it.mediaUrl, mediaType: it.mediaType, thumbnailUrl: it.thumbnailUrl, sets: newDefaultSets, reps: newDefaultReps } as any; setNewHep((p) => (p.some((x) => x.name === newEx.name) ? p : [newEx, ...p])); setQuery(''); setLibraryResults([]); }}
                   displayedExercises={newHep}
                   defaultSets={newDefaultSets}
                   defaultReps={newDefaultReps}

@@ -60,18 +60,18 @@ export default function EditCaseClient({ patientId, caseData }: { patientId: str
     const name = (nameArg || query || '').trim();
     if (!name) return;
     const newEx = { id: Date.now(), name, sets: 3, reps: 10 } as any;
-    setHep((p) => (p.some((x: any) => x.name === newEx.name) ? p : [newEx, ...p]));
+    setHep((p: any[]) => (p.some((x: any) => x.name === newEx.name) ? p : [newEx, ...p]));
     setQuery(''); setLibraryResults([]);
   }
 
   function addExerciseFromLibrary(item: any) {
-    const newEx = { id: Date.now(), name: item.name, category: item.category, description: item.description, sets: 3, reps: 10 } as any;
-    setHep((p) => (p.some((x: any) => x.name === newEx.name) ? p : [newEx, ...p]));
+    const newEx = { id: Date.now(), name: item.name, category: item.category, description: item.description, mediaUrl: item.mediaUrl, mediaType: item.mediaType, thumbnailUrl: item.thumbnailUrl, sets: 3, reps: 10 } as any;
+    setHep((p: any[]) => (p.some((x: any) => x.name === newEx.name) ? p : [newEx, ...p]));
     setQuery(''); setLibraryResults([]);
   }
 
   function removeExercise(id: number) {
-    setHep((p) => p.filter((x) => x.id !== id));
+    setHep((p: any[]) => p.filter((x: any) => x.id !== id));
   }
 
   async function save() {

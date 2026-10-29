@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Header from "../../components/TherapistHeader";
 
@@ -11,6 +11,7 @@ export default function MyPatientsPage() {
   const [patients, setPatients] = useState<any[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
 
   useEffect(() => {
     setLoading(true);
@@ -29,11 +30,50 @@ export default function MyPatientsPage() {
       });
   }, []);
 
+  const sortedPatients = useMemo(() => {
+    const list = Array.isArray(patients) ? [...patients] : [];
+    return list.sort((a, b) => {
+      const aLast = String(a?.lastName || '').toLowerCase();
+      const bLast = String(b?.lastName || '').toLowerCase();
+      if (aLast !== bLast) return aLast.localeCompare(bLast);
+
+      const aFirst = String(a?.firstName || '').toLowerCase();
+      const bFirst = String(b?.firstName || '').toLowerCase();
+      return aFirst.localeCompare(bFirst);
+    });
+  }, [patients]);
+
+  const filteredPatients = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return sortedPatients;
+    return sortedPatients.filter((p) => {
+      const fullName = `${p?.firstName || ''} ${p?.lastName || ''}`.toLowerCase();
+      const contact = String(p?.contact || '').toLowerCase();
+      return fullName.includes(q) || contact.includes(q);
+    });
+  }, [query, sortedPatients]);
+
   return (
     <div className="main">
       <Header />
       <div className="content">
         <h2>My Patients</h2>
+
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 12, width: '100%' }}>
+          <input
+            aria-label="Search my patients"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search by patient name or contact"
+            style={{ padding: '8px 10px', flex: 1, borderRadius: 6, border: '1px solid #ccc' }}
+          />
+          <button
+            onClick={() => setQuery('')}
+            style={{ padding: '8px 12px', borderRadius: 6, background: '#eee', color: '#222', border: 'none' }}
+          >
+            Clear
+          </button>
+        </div>
 
         {loading && <div>Loading…</div>}
         {error && <div style={{ color: 'crimson' }}>Error: {error}</div>}
@@ -42,9 +82,13 @@ export default function MyPatientsPage() {
           <div style={{ marginTop: 12 }}>You have not added any patients yet.</div>
         )}
 
-        {patients && patients.length > 0 && (
+        {patients && patients.length > 0 && filteredPatients.length === 0 && !loading && (
+          <div style={{ marginTop: 12 }}>No patients found for "{query}".</div>
+        )}
+
+        {patients && patients.length > 0 && filteredPatients.length > 0 && (
           <ul style={{ marginTop: 12, paddingLeft: 0, listStyle: 'none', width: '100%', border: '1px solid #f0f0f0', borderRadius: 6, overflow: 'hidden' }}>
-            {patients.map((p) => (
+            {filteredPatients.map((p) => (
               <li
                 key={p.id}
                 style={{

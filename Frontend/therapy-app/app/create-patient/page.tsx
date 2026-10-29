@@ -10,6 +10,9 @@ type Exercise = {
   name: string;
   category?: string;
   description?: string;
+  mediaUrl?: string;
+  mediaType?: string;
+  thumbnailUrl?: string;
 };
 
 type CaseItem = {
@@ -99,7 +102,17 @@ export default function CreatePatient() {
   }
 
   function addExerciseFromLibrary(item: Exercise) {
-    const newEx: Exercise = { id: Date.now(), name: item.name, category: item.category, description: item.description, sets: caseDefaultSets, reps: caseDefaultReps } as any;
+    const newEx: Exercise = {
+      id: Date.now(),
+      name: item.name,
+      category: item.category,
+      description: item.description,
+      mediaUrl: item.mediaUrl,
+      mediaType: item.mediaType,
+      thumbnailUrl: item.thumbnailUrl,
+      sets: caseDefaultSets,
+      reps: caseDefaultReps,
+    } as any;
     if (caseTitle.trim() !== '') {
       setPendingCaseHep((prev) => (prev.some((p) => p.name === newEx.name) ? prev : [newEx, ...prev]));
     } else {

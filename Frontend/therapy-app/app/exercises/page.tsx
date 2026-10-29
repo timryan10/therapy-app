@@ -12,6 +12,7 @@ type Exercise = {
   description?: string;
   mediaUrl?: string;
   mediaType?: string;
+  thumbnailUrl?: string;
 };
 
 export default function ExercisesPage() {
@@ -66,6 +67,8 @@ export default function ExercisesPage() {
     return mediaUrl;
   };
 
+  const thumbnailSrcFor = (ex: Exercise) => mediaSrcFor(ex.thumbnailUrl);
+
   const isVideoMedia = (ex: Exercise) => {
     const url = ex.mediaUrl || '';
     const byType = (ex.mediaType || '').toLowerCase().startsWith('video/');
@@ -104,8 +107,10 @@ export default function ExercisesPage() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                     {ex.mediaUrl && (
                       isVideoMedia(ex)
-                        ? <video src={mediaSrcFor(ex.mediaUrl)} muted playsInline preload="metadata" style={{ width: 140, height: 80, borderRadius: 6, background: '#000', objectFit: 'cover', pointerEvents: 'none' }} />
-                        : <img src={mediaSrcFor(ex.mediaUrl)} alt="media" style={{ width: 140, height: 80, borderRadius: 6, objectFit: 'cover' }} />
+                        ? (thumbnailSrcFor(ex)
+                          ? <img src={thumbnailSrcFor(ex)} alt={`${ex.name} thumbnail`} loading="lazy" style={{ width: 140, height: 80, borderRadius: 6, objectFit: 'cover', background: '#000' }} />
+                          : <div style={{ width: 140, height: 80, borderRadius: 6, background: '#1f1f1f', color: '#fff', fontSize: 12, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Video</div>)
+                        : <img src={mediaSrcFor(ex.mediaUrl)} alt="media" loading="lazy" style={{ width: 140, height: 80, borderRadius: 6, objectFit: 'cover' }} />
                     )}
                     <div>
                       <Link href={`/exercises/${encodeURIComponent(String(ex.id))}`} style={{ fontWeight: 600, color: '#007da4', textDecoration: 'none' }}>

@@ -4,18 +4,51 @@ const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
 const multer = require('multer');
+const ffmpeg = require('fluent-ffmpeg');
+const ffmpegPath = require('ffmpeg-static');
 
 
 const app = express();
 app.use(cors());
 app.use(express.json());
-const upload = multer({ dest: path.join(__dirname, 'uploads/') });
+const UPLOADS_DIR = path.join(__dirname, 'uploads');
+const THUMBS_DIR = path.join(UPLOADS_DIR, 'thumbs');
+const upload = multer({ dest: UPLOADS_DIR });
+
+if (ffmpegPath) {
+  ffmpeg.setFfmpegPath(ffmpegPath);
+}
+try {
+  fs.mkdirSync(THUMBS_DIR, { recursive: true });
+} catch (e) {
+  // ignore startup mkdir errors; thumbnail generation will gracefully fail
+}
 
 const bcrypt = require('bcryptjs');
 const DATA_PATH = path.join(__dirname, 'exercises.json');
 const PATIENTS_PATH = path.join(__dirname, 'patients.json');
 const FAVORITES_PATH = path.join(__dirname, 'favorites.json');
 const THERAPIST_PATIENTS_PATH = path.join(__dirname, 'therapist_patients.json');
+
+function generateVideoThumbnail(file) {
+  return new Promise((resolve) => {
+    if (!file || !(file.mimetype || '').startsWith('video/')) return resolve('');
+
+    const outputName = `${file.filename}.jpg`;
+    const outputRelative = `/uploads/thumbs/${outputName}`;
+
+    ffmpeg(file.path)
+      .on('end', () => resolve(outputRelative))
+      .on('error', () => resolve(''))
+      .screenshots({
+        count: 1,
+        timemarks: ['00:00:01.000'],
+        filename: outputName,
+        folder: THUMBS_DIR,
+        size: '320x?'
+      });
+  });
+}
 
 app.get('/exercises', (req, res) => {
   fs.readFile(DATA_PATH, 'utf8', (err, data) => {
@@ -45,7 +78,7 @@ app.post('/exercises', upload.single('media'), (req, res) => {
   const { name, description } = req.body || {};
   if (!name || typeof name !== 'string') return res.status(400).json({ error: 'Invalid name' });
 
-  fs.readFile(DATA_PATH, 'utf8', (err, data) => {
+  fs.readFile(DATA_PATH, 'utf8', async (err, data) => {
     if (err) return res.status(500).json({ error: 'Failed to read exercises' });
     let items = [];
     try {
@@ -56,10 +89,12 @@ app.post('/exercises', upload.single('media'), (req, res) => {
 
     let mediaUrl = '';
     let mediaType = '';
+    let thumbnailUrl = '';
     if (req.file) {
       // Save relative path for frontend
       mediaUrl = `/uploads/${req.file.filename}`;
       mediaType = req.file.mimetype || '';
+      thumbnailUrl = await generateVideoThumbnail(req.file);
     }
 
     const newItem = {
@@ -67,7 +102,8 @@ app.post('/exercises', upload.single('media'), (req, res) => {
       name: name.trim(),
       description: description || '',
       mediaUrl,
-      mediaType
+      mediaType,
+      thumbnailUrl
     };
     items.push(newItem);
 
