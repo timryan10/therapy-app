@@ -3,13 +3,18 @@ const express = require('express');
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const multer = require('multer');
 const ffmpeg = require('fluent-ffmpeg');
 const ffmpegPath = require('ffmpeg-static');
 
 
 const app = express();
-app.use(cors());
+const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || 'http://localhost:3000';
+app.use(cors({
+  origin: FRONTEND_ORIGIN,
+  credentials: true,
+}));
 app.use(express.json());
 const UPLOADS_DIR = path.join(__dirname, 'uploads');
 const THUMBS_DIR = path.join(UPLOADS_DIR, 'thumbs');
@@ -29,6 +34,111 @@ const DATA_PATH = path.join(__dirname, 'exercises.json');
 const PATIENTS_PATH = path.join(__dirname, 'patients.json');
 const FAVORITES_PATH = path.join(__dirname, 'favorites.json');
 const THERAPIST_PATIENTS_PATH = path.join(__dirname, 'therapist_patients.json');
+const PRESET_PROGRAMS_PATH = path.join(__dirname, 'preset_programs.json');
+
+const THERAPIST_USERNAME = process.env.THERAPIST_USERNAME || 'therapist';
+const THERAPIST_PASSWORD = process.env.THERAPIST_PASSWORD || 'password123';
+const THERAPIST_SESSION_COOKIE = 'therapist_session';
+const PATIENT_SESSION_COOKIE = 'patient_session';
+const PATIENT_ID_COOKIE = 'patient_id';
+const SESSION_TTL_MS = 1000 * 60 * 60 * 8;
+const therapistSessions = new Map();
+const patientSessions = new Map();
+
+function parseCookies(req) {
+  const raw = req.headers.cookie || '';
+  return raw.split(';').reduce((acc, part) => {
+    const [k, ...rest] = part.trim().split('=');
+    if (!k) return acc;
+    acc[k] = decodeURIComponent(rest.join('='));
+    return acc;
+  }, {});
+}
+
+function setTherapistSessionCookie(res, token) {
+  res.cookie(THERAPIST_SESSION_COOKIE, token, {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: false,
+    maxAge: SESSION_TTL_MS,
+    path: '/',
+  });
+}
+
+function clearTherapistSessionCookie(res) {
+  res.clearCookie(THERAPIST_SESSION_COOKIE, {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: false,
+    path: '/',
+  });
+}
+
+function getValidTherapistSession(req) {
+  const cookies = parseCookies(req);
+  const token = cookies[THERAPIST_SESSION_COOKIE];
+  if (!token) return null;
+
+  const session = therapistSessions.get(token);
+  if (!session) return null;
+
+  if (session.expiresAt < Date.now()) {
+    therapistSessions.delete(token);
+    return null;
+  }
+
+  return { token, session };
+}
+
+function setPatientSessionCookies(res, token, patientId) {
+  res.cookie(PATIENT_SESSION_COOKIE, token, {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: false,
+    maxAge: SESSION_TTL_MS,
+    path: '/',
+  });
+
+  res.cookie(PATIENT_ID_COOKIE, String(patientId || ''), {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: false,
+    maxAge: SESSION_TTL_MS,
+    path: '/',
+  });
+}
+
+function clearPatientSessionCookies(res) {
+  res.clearCookie(PATIENT_SESSION_COOKIE, {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: false,
+    path: '/',
+  });
+
+  res.clearCookie(PATIENT_ID_COOKIE, {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: false,
+    path: '/',
+  });
+}
+
+function getValidPatientSession(req) {
+  const cookies = parseCookies(req);
+  const token = cookies[PATIENT_SESSION_COOKIE];
+  if (!token) return null;
+
+  const session = patientSessions.get(token);
+  if (!session) return null;
+
+  if (session.expiresAt < Date.now()) {
+    patientSessions.delete(token);
+    return null;
+  }
+
+  return { token, session };
+}
 
 function generateVideoThumbnail(file) {
   return new Promise((resolve) => {
@@ -182,6 +292,77 @@ app.delete('/therapists/:id/favorites/:exerciseId', (req, res) => {
   });
 });
 
+// Preset programs: reusable templates per therapist
+app.get('/therapists/:id/preset-programs', (req, res) => {
+  const id = req.params.id;
+  fs.readFile(PRESET_PROGRAMS_PATH, 'utf8', (err, data) => {
+    if (err) return res.status(500).json({ error: 'Failed to read preset programs' });
+    try {
+      const items = JSON.parse(data || '{}');
+      res.json(items[id] || []);
+    } catch (e) {
+      res.status(500).json({ error: 'Invalid preset programs data' });
+    }
+  });
+});
+
+app.post('/therapists/:id/preset-programs', (req, res) => {
+  const id = req.params.id;
+  const body = req.body || {};
+  const title = String(body.title || '').trim();
+  if (!title) return res.status(400).json({ error: 'title is required' });
+
+  const payload = {
+    id: `preset-${Date.now()}`,
+    title,
+    bodyParts: Array.isArray(body.bodyParts) ? body.bodyParts : [],
+    frequency: body.frequency || '',
+    hep: Array.isArray(body.hep) ? body.hep : [],
+    createdAt: new Date().toISOString(),
+  };
+
+  fs.readFile(PRESET_PROGRAMS_PATH, 'utf8', (err, data) => {
+    if (err) return res.status(500).json({ error: 'Failed to read preset programs' });
+    let items = {};
+    try {
+      items = JSON.parse(data || '{}');
+    } catch (e) {
+      return res.status(500).json({ error: 'Invalid preset programs data' });
+    }
+
+    const list = Array.isArray(items[id]) ? items[id] : [];
+    items[id] = [payload, ...list];
+
+    fs.writeFile(PRESET_PROGRAMS_PATH, JSON.stringify(items, null, 2), 'utf8', (werr) => {
+      if (werr) return res.status(500).json({ error: 'Failed to save preset program' });
+      res.status(201).json(payload);
+    });
+  });
+});
+
+app.delete('/therapists/:id/preset-programs/:presetId', (req, res) => {
+  const id = req.params.id;
+  const presetId = req.params.presetId;
+
+  fs.readFile(PRESET_PROGRAMS_PATH, 'utf8', (err, data) => {
+    if (err) return res.status(500).json({ error: 'Failed to read preset programs' });
+    let items = {};
+    try {
+      items = JSON.parse(data || '{}');
+    } catch (e) {
+      return res.status(500).json({ error: 'Invalid preset programs data' });
+    }
+
+    const list = Array.isArray(items[id]) ? items[id] : [];
+    items[id] = list.filter((p) => String(p.id) !== String(presetId));
+
+    fs.writeFile(PRESET_PROGRAMS_PATH, JSON.stringify(items, null, 2), 'utf8', (werr) => {
+      if (werr) return res.status(500).json({ error: 'Failed to delete preset program' });
+      res.json({ ok: true });
+    });
+  });
+});
+
 // patients endpoints
 app.get('/patients', (req, res) => {
   fs.readFile(PATIENTS_PATH, 'utf8', (err, data) => {
@@ -201,6 +382,47 @@ app.get('/patients', (req, res) => {
   });
 });
 
+// therapist login/logout/session
+app.post('/auth/therapist-login', (req, res) => {
+  const { username, password } = req.body || {};
+  if (!username || !password) return res.status(400).json({ error: 'username and password required' });
+
+  if (String(username) !== THERAPIST_USERNAME || String(password) !== THERAPIST_PASSWORD) {
+    return res.status(401).json({ error: 'Invalid credentials' });
+  }
+
+  const token = crypto.randomBytes(24).toString('hex');
+  therapistSessions.set(token, {
+    username: THERAPIST_USERNAME,
+    createdAt: Date.now(),
+    expiresAt: Date.now() + SESSION_TTL_MS,
+  });
+  setTherapistSessionCookie(res, token);
+  return res.json({ ok: true, therapist: { username: THERAPIST_USERNAME } });
+});
+
+app.post('/auth/logout', (req, res) => {
+  const therapist = getValidTherapistSession(req);
+  if (therapist?.token) therapistSessions.delete(therapist.token);
+  const patient = getValidPatientSession(req);
+  if (patient?.token) patientSessions.delete(patient.token);
+  clearTherapistSessionCookie(res);
+  clearPatientSessionCookies(res);
+  return res.json({ ok: true });
+});
+
+app.get('/auth/session', (req, res) => {
+  const valid = getValidTherapistSession(req);
+  if (!valid) return res.status(401).json({ ok: false });
+  return res.json({ ok: true, role: 'therapist', username: valid.session.username });
+});
+
+app.get('/auth/patient-session', (req, res) => {
+  const valid = getValidPatientSession(req);
+  if (!valid) return res.status(401).json({ ok: false });
+  return res.json({ ok: true, role: 'patient', patientId: valid.session.patientId });
+});
+
 // patient login
 app.post('/auth/patient-login', (req, res) => {
   const { username, password } = req.body || {};
@@ -218,21 +440,30 @@ app.post('/auth/patient-login', (req, res) => {
     const patient = items.find((p) => (p.username && p.username === username) || (p.contact && p.contact === username));
     if (!patient) return res.status(401).json({ error: 'Invalid credentials' });
 
+    const completePatientLogin = (rawPatient) => {
+      const safe = Object.assign({}, rawPatient);
+      if (safe.passwordHash) delete safe.passwordHash;
+      const token = crypto.randomBytes(24).toString('hex');
+      patientSessions.set(token, {
+        patientId: safe.id,
+        createdAt: Date.now(),
+        expiresAt: Date.now() + SESSION_TTL_MS,
+      });
+      setPatientSessionCookies(res, token, safe.id);
+      return res.json({ ok: true, patient: safe });
+    };
+
     const supplied = String(password);
     // if we have a stored hash, verify; otherwise accept default password (firstName+lastName)
     if (patient.passwordHash) {
       bcrypt.compare(supplied, patient.passwordHash, (bErr, ok) => {
         if (bErr || !ok) return res.status(401).json({ error: 'Invalid credentials' });
-        const safe = Object.assign({}, patient);
-        if (safe.passwordHash) delete safe.passwordHash;
-        res.json({ ok: true, patient: safe });
+        return completePatientLogin(patient);
       });
     } else {
       const defaultPassword = String(patient.firstName || '') + String(patient.lastName || '');
       if (supplied === defaultPassword) {
-        const safe = Object.assign({}, patient);
-        if (safe.passwordHash) delete safe.passwordHash;
-        res.json({ ok: true, patient: safe });
+        return completePatientLogin(patient);
       } else {
         res.status(401).json({ error: 'Invalid credentials' });
       }

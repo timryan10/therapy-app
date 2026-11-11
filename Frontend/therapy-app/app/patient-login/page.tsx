@@ -16,7 +16,7 @@ export default function PatientLogin() {
     e.preventDefault();
     setLoading(true); setError("");
     try {
-      const res = await fetch(`${BACKEND}/auth/patient-login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, password }) });
+      const res = await fetch(`${BACKEND}/auth/patient-login`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ username, password }) });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         setError(body?.error || 'Login failed');

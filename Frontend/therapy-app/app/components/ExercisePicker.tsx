@@ -91,8 +91,7 @@ export default function ExercisePicker(props: {
         <section style={{ marginTop: 18 }}>
           <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
             <h3>HEP Title/ Case: </h3>
-            <input placeholder="Case title(Optional)" value={caseTitle || ''} onChange={(e) => setCaseTitle && setCaseTitle(e.target.value)} style={{ padding: '6px 8px', border: '1px solid #ccc', borderRadius: 6 }} />
-            <input placeholder="Body parts" value={caseBodyParts || ''} onChange={(e) => setCaseBodyParts && setCaseBodyParts(e.target.value)} style={{ padding: '6px 8px', border: '1px solid #ccc', borderRadius: 6 }} />
+            <input placeholder="Case title(Optional)" value={caseTitle || ''} onChange={(e) => setCaseTitle && setCaseTitle(e.target.value)} style={{ padding: '6px 8px', border: '1px solid #ccc', borderRadius: 6, width: '80%' }} />
           </div>
         </section>
       )}

@@ -7,9 +7,6 @@ import { useRouter } from "next/navigation";
 
 // backend
 const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:4000";
-// TODO: keep therapist demo auth until therapist backend exists
-const VALID_USERNAME = "therapist";
-const VALID_PASSWORD = "password123";
 
 export default function Home() {
   const [role, setRole] = useState<"therapist" | "patient">("therapist");
@@ -25,12 +22,23 @@ export default function Home() {
     const p = password.trim();
 
     if (role === "therapist") {
-      if (u === VALID_USERNAME && p === VALID_PASSWORD) {
+      try {
+        const res = await fetch(`${BACKEND}/auth/therapist-login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ username: u, password: p })
+        });
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          setError(body?.error || 'Invalid username or password.');
+          return;
+        }
         setError("");
         router.push('/therapist-dashboard');
-        return;
+      } catch (err: any) {
+        setError(String(err?.message || 'Network error'));
       }
-      setError("Invalid username or password.");
       return;
     }
 
@@ -39,6 +47,7 @@ export default function Home() {
       const res = await fetch(`${BACKEND}/auth/patient-login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ username: u, password: p })
       });
       if (!res.ok) {

@@ -1,0 +1,23 @@
+{
+  "therapist1": [
+    {
+      "id": "preset-1794407157952",
+      "title": "Anterior Total Hip",
+      "bodyParts": [],
+      "frequency": "2x/Day",
+      "hep": [
+        {
+          "id": 1794407149843,
+          "name": "Bridge",
+          "description": "To perform the exercise, lie on your back with your knees bent and feet flat on the floor, hip-width apart. Engage your core and squeeze your glutes as you lift your hips toward the ceiling until your shoulders, hips, and knees form a straight line. Hold briefly, then slowly lower your hips back to the starting position with control.",
+          "mediaUrl": "/uploads/c52eec74c6b0a6bbca031b57678cee60",
+          "mediaType": "video/quicktime",
+          "thumbnailUrl": "/uploads/thumbs/c52eec74c6b0a6bbca031b57678cee60.jpg",
+          "sets": 3,
+          "reps": 10
+        }
+      ],
+      "createdAt": "2026-11-11T14:25:57.952Z"
+    }
+  ]
+}

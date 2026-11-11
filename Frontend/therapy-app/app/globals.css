@@ -85,6 +85,20 @@ body {
   cursor: pointer;
 }
 
+.logout-button {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  color: white;
+  border-radius: 8px;
+  padding: 6px 10px;
+  cursor: pointer;
+  font: inherit;
+}
+
+.logout-button:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
 .signIn input {
   margin: 5px 0;
   padding: 10px;
@@ -250,6 +264,10 @@ body {
 /* restore create-patient action button styling */
 .action-button.new-hep {
   background-color: #28a745;
+}
+
+.action-button.preset-program {
+  background-color: #0ea5a4;
 }
 
 .patient-list {

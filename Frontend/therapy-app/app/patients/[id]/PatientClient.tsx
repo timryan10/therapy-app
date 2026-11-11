@@ -62,6 +62,7 @@ export default function PatientClient({ patient, exercises }: { patient: Patient
   const [searchLoading, setSearchLoading] = useState(false);
   const searchDeb = useRef<any>(null);
   const [libMode, setLibMode] = useState<'library' | 'my'>('library');
+  const [weekOffsetByCase, setWeekOffsetByCase] = useState<Record<string, number>>({});
 
   useEffect(() => {
     if (!query) {
@@ -94,9 +95,16 @@ export default function PatientClient({ patient, exercises }: { patient: Patient
     return () => { if (searchDeb.current) window.clearTimeout(searchDeb.current); };
   }, [query, libMode]);
 
-  const getLast7Days = () => {
+  const startOfDay = (d: Date) => {
+    const x = new Date(d);
+    x.setHours(0, 0, 0, 0);
+    return x;
+  };
+
+  const getWeekDays = (weekOffset: number) => {
     const days: { key: string; label: string; dayNumber: number }[] = [];
     const now = new Date();
+    now.setDate(now.getDate() - (weekOffset * 7));
     for (let i = 6; i >= 0; i -= 1) {
       const d = new Date(now);
       d.setDate(now.getDate() - i);
@@ -107,6 +115,40 @@ export default function PatientClient({ patient, exercises }: { patient: Patient
       });
     }
     return days;
+  };
+
+  const getCaseEstablishedDate = (c: any) => {
+    const explicit = c?.createdAt || c?.createdOn || c?.establishedAt || c?.startDate;
+    if (explicit) {
+      const parsed = new Date(explicit);
+      if (!Number.isNaN(parsed.getTime())) return startOfDay(parsed);
+    }
+
+    const idMatch = String(c?.id || '').match(/(\d{10,})$/);
+    if (idMatch) {
+      const ts = Number(idMatch[1]);
+      const parsed = new Date(ts);
+      if (!Number.isNaN(parsed.getTime())) return startOfDay(parsed);
+    }
+
+    if (Array.isArray(c?.completionHistory) && c.completionHistory.length > 0) {
+      const sorted = c.completionHistory
+        .map((entry: any) => new Date(entry?.date))
+        .filter((d: Date) => !Number.isNaN(d.getTime()))
+        .sort((a: Date, b: Date) => a.getTime() - b.getTime());
+      if (sorted.length > 0) return startOfDay(sorted[0]);
+    }
+
+    return startOfDay(new Date());
+  };
+
+  const getMaxWeekOffset = (c: any) => {
+    const established = getCaseEstablishedDate(c);
+    const today = startOfDay(new Date());
+    const diffMs = today.getTime() - established.getTime();
+    if (diffMs <= 0) return 0;
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    return Math.floor(diffDays / 7);
   };
 
   const getPrescribedTimesPerDay = (c: any) => {
@@ -136,8 +178,6 @@ export default function PatientClient({ patient, exercises }: { patient: Patient
     const direct = Number(c?.completedToday ?? c?.timesCompletedToday ?? c?.dailyCompletedCount ?? 0);
     return Number.isFinite(direct) && direct > 0 ? direct : 0;
   };
-
-  const weekDays = getLast7Days();
 
   return (
     <div>
@@ -174,8 +214,38 @@ export default function PatientClient({ patient, exercises }: { patient: Patient
                       <div style={{ color: '#666', fontSize: 13 }}>{c.bodyParts.join(', ')}</div>
                     )}
                   </div>
-                  <div style={{ marginTop: 8, display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                    {weekDays.map((day) => {
+                  {(() => {
+                    const caseKey = String(c.id);
+                    const weekOffset = weekOffsetByCase[caseKey] || 0;
+                    const weekDays = getWeekDays(weekOffset);
+                    const maxWeekOffset = getMaxWeekOffset(c);
+
+                    return (
+                      <>
+                        <div style={{ marginTop: 8, marginBottom: 6, fontSize: 12, color: '#6b7280' }}>
+                          {weekDays[0]?.label} {weekDays[0]?.dayNumber} - {weekDays[6]?.label} {weekDays[6]?.dayNumber}
+                        </div>
+
+                        <div style={{ marginTop: 2, display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <button
+                            type="button"
+                            onClick={() => setWeekOffsetByCase((prev) => ({ ...prev, [caseKey]: Math.min(maxWeekOffset, weekOffset + 1) }))}
+                            disabled={weekOffset >= maxWeekOffset}
+                            style={{
+                              border: '1px solid #d1d5db',
+                              background: weekOffset >= maxWeekOffset ? '#f3f4f6' : '#fff',
+                              color: '#111827',
+                              borderRadius: 6,
+                              padding: '6px 10px',
+                              cursor: weekOffset >= maxWeekOffset ? 'not-allowed' : 'pointer',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            ← Older
+                          </button>
+
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                            {weekDays.map((day) => {
                       const prescribedTimesPerDay = getPrescribedTimesPerDay(c);
                       const count = getCompletionsForDate(c, day.key);
                       const isComplete = prescribedTimesPerDay ? count >= prescribedTimesPerDay : count > 0;
@@ -184,28 +254,49 @@ export default function PatientClient({ patient, exercises }: { patient: Patient
                       const bg = isComplete ? '#dcfce7' : isInProgress ? '#fef3c7' : '#fee2e2';
                       const fg = isComplete ? '#166534' : isInProgress ? '#92400e' : '#991b1b';
 
-                      return (
-                        <div
-                          key={day.key}
-                          title={`${day.label}: ${count}${prescribedTimesPerDay ? ` / ${prescribedTimesPerDay}` : ''}`}
-                          style={{
-                            minWidth: 52,
-                            border: '1px solid #e2e8f0',
-                            borderRadius: 6,
-                            padding: '4px 6px',
-                            textAlign: 'center',
-                            background: bg,
-                            color: fg,
-                            fontSize: 12,
-                            fontWeight: 700,
-                          }}
-                        >
-                          <div style={{ fontSize: 11 }}>{day.label} {day.dayNumber}</div>
-                          <div>{symbol}</div>
+                            return (
+                              <div
+                                key={day.key}
+                                title={`${day.label}: ${count}${prescribedTimesPerDay ? ` / ${prescribedTimesPerDay}` : ''}`}
+                                style={{
+                                  minWidth: 52,
+                                  border: '1px solid #e2e8f0',
+                                  borderRadius: 6,
+                                  padding: '4px 6px',
+                                  textAlign: 'center',
+                                  background: bg,
+                                  color: fg,
+                                  fontSize: 12,
+                                  fontWeight: 700,
+                                }}
+                              >
+                                <div style={{ fontSize: 11 }}>{day.label} {day.dayNumber}</div>
+                                <div>{symbol}</div>
+                              </div>
+                            );
+                          })}
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => setWeekOffsetByCase((prev) => ({ ...prev, [caseKey]: Math.max(0, weekOffset - 1) }))}
+                            disabled={weekOffset === 0}
+                            style={{
+                              border: '1px solid #d1d5db',
+                              background: weekOffset === 0 ? '#f3f4f6' : '#fff',
+                              color: '#111827',
+                              borderRadius: 6,
+                              padding: '6px 10px',
+                              cursor: weekOffset === 0 ? 'not-allowed' : 'pointer',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            Newer →
+                          </button>
                         </div>
-                      );
-                    })}
-                  </div>
+                      </>
+                    );
+                  })()}
                 </div>
                 <div>
                   <button onClick={() => router.push(`/patients/${patient.id}/cases/${c.id}`)} style={{ background: '#007da4', color: 'white', border: 'none', padding: '6px 10px', borderRadius: 6 }}>View Exercises</button>

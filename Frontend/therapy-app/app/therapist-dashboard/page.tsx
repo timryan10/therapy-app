@@ -50,6 +50,9 @@ export default function Page() {
           <Link href="/create-patient" className="action-button new-hep">
             <h2>+ Create Patient</h2>
           </Link>
+          <Link href="/preset-programs" className="action-button preset-program">
+            <h2>Preset Programs</h2>
+          </Link>
         </div>
 
         <div className="recent-hep">
