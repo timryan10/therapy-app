@@ -340,6 +340,67 @@ app.post('/therapists/:id/preset-programs', (req, res) => {
   });
 });
 
+app.get('/therapists/:id/preset-programs/:presetId', (req, res) => {
+  const id = req.params.id;
+  const presetId = req.params.presetId;
+
+  fs.readFile(PRESET_PROGRAMS_PATH, 'utf8', (err, data) => {
+    if (err) return res.status(500).json({ error: 'Failed to read preset programs' });
+    let items = {};
+    try {
+      items = JSON.parse(data || '{}');
+    } catch (e) {
+      return res.status(500).json({ error: 'Invalid preset programs data' });
+    }
+
+    const list = Array.isArray(items[id]) ? items[id] : [];
+    const found = list.find((p) => String(p.id) === String(presetId));
+    if (!found) return res.status(404).json({ error: 'Preset program not found' });
+    return res.json(found);
+  });
+});
+
+app.put('/therapists/:id/preset-programs/:presetId', (req, res) => {
+  const id = req.params.id;
+  const presetId = req.params.presetId;
+  const body = req.body || {};
+
+  fs.readFile(PRESET_PROGRAMS_PATH, 'utf8', (err, data) => {
+    if (err) return res.status(500).json({ error: 'Failed to read preset programs' });
+    let items = {};
+    try {
+      items = JSON.parse(data || '{}');
+    } catch (e) {
+      return res.status(500).json({ error: 'Invalid preset programs data' });
+    }
+
+    const list = Array.isArray(items[id]) ? items[id] : [];
+    const idx = list.findIndex((p) => String(p.id) === String(presetId));
+    if (idx === -1) return res.status(404).json({ error: 'Preset program not found' });
+
+    const current = list[idx] || {};
+    const title = body.title !== undefined ? String(body.title || '').trim() : String(current.title || '').trim();
+    if (!title) return res.status(400).json({ error: 'title is required' });
+
+    const updated = {
+      ...current,
+      title,
+      bodyParts: Array.isArray(body.bodyParts) ? body.bodyParts : (current.bodyParts || []),
+      frequency: body.frequency !== undefined ? (body.frequency || '') : (current.frequency || ''),
+      hep: Array.isArray(body.hep) ? body.hep : (current.hep || []),
+      updatedAt: new Date().toISOString(),
+    };
+
+    list[idx] = updated;
+    items[id] = list;
+
+    fs.writeFile(PRESET_PROGRAMS_PATH, JSON.stringify(items, null, 2), 'utf8', (werr) => {
+      if (werr) return res.status(500).json({ error: 'Failed to update preset program' });
+      return res.json(updated);
+    });
+  });
+});
+
 app.delete('/therapists/:id/preset-programs/:presetId', (req, res) => {
   const id = req.params.id;
   const presetId = req.params.presetId;

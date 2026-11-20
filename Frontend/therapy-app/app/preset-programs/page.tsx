@@ -90,12 +90,14 @@ export default function PresetProgramsPage() {
               {filtered.map((p) => (
                 <div key={p.id} style={{ border: "1px solid #e5e7eb", borderRadius: 10, padding: 12, background: "#fff" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
-                    <div>
-                      <div style={{ fontWeight: 700 }}>{p.title}</div>
-                      <div style={{ color: "#475569", fontSize: 13 }}>
-                        {(p.hep || []).length} exercises {p.frequency ? `• ${p.frequency}` : ""}
+                    <Link href={`/preset-programs/${encodeURIComponent(p.id)}`} style={{ textDecoration: "none", color: "inherit", flex: 1 }}>
+                      <div>
+                        <div style={{ fontWeight: 700, color: "#0f172a" }}>{p.title}</div>
+                        <div style={{ color: "#475569", fontSize: 13 }}>
+                          {(p.hep || []).length} exercises {p.frequency ? `• ${p.frequency}` : ""}
+                        </div>
                       </div>
-                    </div>
+                    </Link>
                     <button
                       type="button"
                       onClick={() => removePreset(p.id)}
